@@ -7,7 +7,7 @@ That said...
 Build the sample with:
 
 ```
-cargo build --release --example contract-split-evenly --target wasm32-wasi
+cargo build --release --example contract-split-evenly
 ```
 
 If you don't already have the `wasm32-wasi` Rust target installed, you can install it with `rustup`.
