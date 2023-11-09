@@ -7,8 +7,11 @@ That said...
 Build the sample with:
 
 ```
-cargo build --release --example contract-split-evenly --target wasm32-wasi
+cargo build --release --example contract-split-evenly
 ```
+
+We declared target to be set to `wasm32-wasi` by default in the `.cargo` crate; inside you'll find `config.toml` which you can copy if you'd like to do the same.
+Otherwise it will be necessary to call `--target wasm32-wasi` at the end of of any build commands.
 
 If you don't already have the `wasm32-wasi` Rust target installed, you can install it with `rustup`.
 
