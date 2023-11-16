@@ -38,7 +38,7 @@ pub trait ERC721: ERC165 {
     /// @param _to The new owner
     /// @param _tokenId The NFT to transfer
     /// @param data Additional data with no specified format, sent in call to `_to`
-    fn safe_transfer_from(
+    fn safe_transfer_with_data(
         &self,
         from: Address,
         to: Address,
@@ -52,8 +52,8 @@ pub trait ERC721: ERC165 {
     /// @param _from The current owner of the NFT
     /// @param _to The new owner
     /// @param _tokenId The NFT to transfer
-    fn safe_transfer_no_data_from(&self, from: Address, to: Address, token_id: U256) -> Result<()> {
-        self.safe_transfer_from(from, to, token_id, &[])
+    fn safe_transfer_from(&self, from: Address, to: Address, token_id: U256) -> Result<()> {
+        self.safe_transfer_with_data(from, to, token_id, &[])
     }
 
     /// @notice Transfer ownership of an NFT -- THE CALLER IS RESPONSIBLE
