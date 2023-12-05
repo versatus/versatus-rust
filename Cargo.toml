@@ -9,5 +9,6 @@ edition = "2021"
 anyhow = "1.0.75"
 ethnum = { version = "1", features = ["serde"] }
 serde = "1.0.171"
+serde-hex = "0.1.0"
 serde_derive = "1.0.171"
 serde_json = "1.0.103"

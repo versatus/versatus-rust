@@ -7,6 +7,7 @@
 use crate::{eip165::ERC165, versatus_rust::Address};
 use anyhow::Result;
 use ethnum::U256;
+use serde_derive::{Deserialize, Serialize};
 
 /// @title ERC-721 Non-Fungible Token Standard
 /// @dev See https://eips.ethereum.org/EIPS/eip-721
@@ -97,6 +98,8 @@ pub trait ERC721: ERC165 {
     fn is_approved_for_all(&self, owner: Address, operator: Address) -> Result<bool>;
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum Erc721Event {
     /// @dev This emits when ownership of any NFT changes by any mechanism.
     ///  This event emits when NFTs are created (`from` == 0) and destroyed
