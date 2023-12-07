@@ -1,23 +1,71 @@
-use anyhow::{Error, Result};
+use anyhow::Result;
 use ethnum::U256;
 use serde_derive::{Deserialize, Serialize};
+use serde_hex::{SerHex, StrictPfx};
 use std::io::{self, Read, Write};
 
-#[derive(Debug, Serialize, Deserialize)]
+/// This trait will generally be implemented by all Smart Contracts, as it gives us a way to make
+/// all of the contract's inputs available to the contract itself.
+pub trait SmartContract {
+    /// A function to receive contract inputs. If the contract doesn't do anything with inputs,
+    /// this can be empty. It can also do validation on the inputs and return an error if there is
+    /// a problem with the input data provided. In general, smart contracts will likely want to
+    /// stash this somewhere in &self for use in smart contract functions.
+    fn receive_inputs(&mut self, inputs: &mut SmartContractInputs) -> Result<()>;
+}
+
+/// SmartContractInputs represents the entire bundle of inputs sent into a Versatus smart contract.
+/// It is a collection of input data from a variety of locations, including the contract caller,
+/// and the protocol accounts database.
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct ApplicationInputs {
+pub struct SmartContractInputs {
+    /// Version of the compute stack and API/ABI
+    pub version: i32,
+    /// Account info as provided by the protocol
+    pub account_info: AccountInfo,
+    /// Protocol inputs as provided by the protocol
+    pub protocol_input: ProtocolInputs,
+    /// Application inputs as provided by the application via the protocol
+    pub contract_input: ContractInputs,
+}
+
+impl SmartContractInputs {
+    /// Read JSON data on stdin and deserialise it to a set of Rust data structures.
+    pub fn gather() -> Result<Self> {
+        let mut json_data: Vec<u8> = vec![];
+        let _num_bytes = io::stdin().read_to_end(&mut json_data)?;
+        Ok(serde_json::from_slice(&json_data)?)
+    }
+
+    /// Returns a copy of the associated account information
+    pub fn account_info(&self) -> AccountInfo {
+        self.account_info.clone()
+    }
+
+    /// Returns the address of the associated account
+    pub fn account_addr(&self) -> Address {
+        self.account_info.account_address.clone()
+    }
+}
+
+/// ContractInputs is a structure representing the inputs to a smart contract and generally equates
+/// to what the Versatus protocol would receive on a public RPC request to execute a contract.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ContractInputs {
     /// A string representing a function within the contract to call. This allows
     /// a single WASM binary to provide multiple functionalities. The idea would
     /// be that a main() function in the contract could switch between them based
     /// on a comparison with this value.
     pub contract_fn: String,
-    /// An amount to spend from contract's wallet
-    pub amount: u64,
-    /// A list of recipients (as a temporary substitute for proper user-defined inputs).
-    pub recipients: Vec<String>,
+    /// Inputs passed from the caller to pass into the contract function.
+    pub function_inputs: FunctionInputs,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+/// ProtocolInputs represents inputs provided from the protocol that may be useful in smart
+/// contracts.
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ProtocolInputs {
     /// An internal version number for the protocol at this point in time
@@ -28,113 +76,48 @@ pub struct ProtocolInputs {
     pub block_time: u64,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+/// AccountInfo represents the state of the account calling the smart contract and is provided by
+/// the Versatus protocol.
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct AccountInfo {
     /// Address of the smart contract's blockchain account
-    pub account_address: String,
+    pub account_address: Address,
     /// Current balance of the smart contract's account at last block
-    pub account_balance: u64,
+    pub account_balance: U256,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+/// FunctionInputs represents the data provided by the contract caller to be used as inputs into
+/// the function being called within the smart contract.
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct ComputeInputs {
-    /// Version of the compute stack and API/ABI
-    pub version: i32,
-    /// Account info as provided by the protocol
-    pub account_info: AccountInfo,
-    /// Protocol inputs as provided by the protocol
-    pub protocol_input: ProtocolInputs,
-    /// Application inputs as provided by the application via the protocol
-    pub application_input: ApplicationInputs,
+pub enum FunctionInputs {
+    Erc20(crate::eip20::Erc20Inputs),
 }
 
-impl ComputeInputs {
-    pub fn gather() -> Result<Self> {
-        let mut json_data: Vec<u8> = vec![];
-        let _num_bytes = io::stdin().read_to_end(&mut json_data)?;
-        Ok(serde_json::from_slice(&json_data)?)
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
+/// A high-level struct representing the output of a smart contract.
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct ComputeOutputs {
-    pub transactions: Vec<ComputeTransaction>,
+pub struct SmartContractOutputs {
+    pub result: Vec<ContractResult>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+/// A smart contract result. Will generally equate to one of a number of known contract types, such
+/// as ERC20 or ERC721.
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct ComputeTransaction {
-    pub recipient: String,
-    pub amount: u64,
+pub enum ContractResult {
+    Erc20(crate::eip20::Erc20Result),
+    Erc721(()),
 }
 
-// XXX: TODO: turn this into a builder
-impl ComputeOutputs {
+impl SmartContractOutputs {
+    /// Writes smart contract output on stdout.
     pub fn commit(&self) -> Result<()> {
         Ok(io::stdout().write_all(serde_json::to_string(&self)?.as_bytes())?)
     }
 }
 
-// ERC20 related structures and interfaces
+/// A structure to represent an address (a slice of 20 bytes)
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Address {
-    pub bytes: [u8; 20],
-}
-
-/// An interface for ERC20 contracts to conform to.
-pub trait Erc20 {
-    /// Optional. Token name.
-    fn name(&self) -> Result<String, Error>;
-    /// Optional. Token ticker symbol.
-    fn symbol(&self) -> Result<String, Error>;
-    /// Optional. Returns the number of decimals the token uses - e.g. 8, means to divide the token amount by
-    /// 100000000 to get its user representation.
-    fn decimals(&self) -> Result<u8, Error>;
-    /// Returns the total token supply.
-    fn total_supply(&self) -> Result<U256, Error>;
-    /// Returns the account balance of another account with address [owner].
-    fn balance_of(&self, owner: Address) -> Result<U256, Error>;
-    /// Transfers _value amount of tokens to address _to, and MUST fire the Transfer event.
-    /// The function SHOULD throw if the message caller’s account balance does not have enough tokens to spend.
-    fn transfer(&self, to: Address, value: U256) -> Result<bool, Error>;
-    /// Transfers _value amount of tokens from address _from to address _to, and MUST fire the Transfer event.
-    ///
-    /// The transferFrom method is used for a withdraw workflow, allowing contracts to transfer tokens on
-    /// your behalf. This can be used for example to allow a contract to transfer tokens on your behalf
-    /// and/or to charge fees in sub-currencies. The function SHOULD throw unless the _from account has
-    /// deliberately authorized the sender of the message via some mechanism.
-    ///
-    /// Note Transfers of 0 values MUST be treated as normal transfers and fire the Transfer event.
-    fn transfer_from(&self, from: Address, to: Address, value: U256) -> Result<bool, Error>;
-    /// Allows _spender to withdraw from your account multiple times, up to the _value amount. If this
-    /// function is called again it overwrites the current allowance with _value.
-    ///
-    /// NOTE: To prevent attack vectors like the one described here and discussed here, clients SHOULD make
-    /// sure to create user interfaces in such a way that they set the allowance first to 0 before setting
-    /// it to another value for the same spender. THOUGH The contract itself shouldn’t enforce it, to
-    /// allow backwards compatibility with contracts deployed before.
-    fn approve(&self, spender: Address, value: U256) -> Result<bool, Error>;
-    /// Returns the amount which _spender is still allowed to withdraw from _owner.
-    fn allowance(&self, owner: Address, spender: Address) -> Result<U256, Error>;
-}
-
-pub struct Erc20TransferEvent {
-    pub from: Address,
-    pub to: Address,
-    pub value: U256,
-}
-
-pub struct Erc20ApprovalEvent {
-    pub owner: Address,
-    pub spender: Address,
-    pub value: U256,
-}
-
-pub fn process_erc20<T: Erc20>(t: &T) -> Result<bool, Error> {
-    println!("{}: {}", t.symbol()?, t.name()?);
-    println!("Supply: {}", t.total_supply()?);
-    Ok(true)
-}
+pub struct Address(#[serde(with = "SerHex::<StrictPfx>")] pub [u8; 20]);
