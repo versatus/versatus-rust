@@ -3,7 +3,7 @@
 /// up being re-created elsewhere with more functionality.
 use ethnum::U256;
 use std::io::{self, Write};
-use versatus_rust::eip20::{Erc20Inputs::Name, Erc20Result::Symbol};
+use versatus_rust::eip20::{Erc20Inputs::Transfer, Erc20Result::Symbol};
 use versatus_rust::versatus_rust::{
     AccountInfo, Address, ContractInputs, ContractResult, FunctionInputs, ProtocolInputs,
     SmartContractInputs, SmartContractOutputs,
@@ -23,7 +23,10 @@ fn main() {
         },
         contract_input: ContractInputs {
             contract_fn: "name".to_string(),
-            function_inputs: FunctionInputs::Erc20(Name()),
+            function_inputs: FunctionInputs::Erc20(Transfer {
+                address: Address([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 1]),
+                value: U256::MAX,
+            }),
         },
     };
 
