@@ -2,6 +2,12 @@
 name = "versatus-rust"
 version = "0.1.0"
 edition = "2021"
+authors = ["Versatus Labs <info@versatus.io>"]
+description = "A crate to assist in development of smart contracts in Rust for the Versatus network"
+readme = "README.md"
+homepage = "https://versatus.io"
+repository = "https://github.com/versatus/versatus-rust"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
