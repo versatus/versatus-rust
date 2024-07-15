@@ -2,9 +2,10 @@ use anyhow::Result;
 use lasr_types::{
     Address, AddressOrNamespace, BurnInstruction, BurnInstructionBuilder, CreateInstruction,
     CreateInstructionBuilder, InnerInstruction, ProgramField, ProgramFieldValue,
-    ProgramUpdateField, ProgramUpdateFieldBuilder, TokenDistribution, TokenField, TokenFieldValue,
-    TokenOrProgramUpdate, TokenUpdateField, TokenUpdateFieldBuilder, TransferInstruction,
-    TransferInstructionBuilder, UpdateInstruction, UpdateInstructionBuilder, U256,
+    ProgramUpdateField, ProgramUpdateFieldBuilder, TokenDistribution, TokenDistributionBuilder,
+    TokenField, TokenFieldValue, TokenOrProgramUpdate, TokenUpdateField, TokenUpdateFieldBuilder,
+    TransferInstruction, TransferInstructionBuilder, UpdateInstruction, UpdateInstructionBuilder,
+    U256,
 };
 use serde::Serialize;
 
@@ -99,6 +100,23 @@ pub fn burn_instruction_builder(
         .map_err(|e| anyhow::anyhow!("{e:?}"))
 }
 
+pub fn token_distr_builder(
+    program_id: AddressOrNamespace,
+    to: AddressOrNamespace,
+    amount: Option<U256>,
+    token_ids: Vec<U256>,
+    update_fields: Vec<TokenUpdateField>,
+) -> Result<TokenDistribution> {
+    TokenDistributionBuilder::new()
+        .program_id(program_id)
+        .to(to)
+        .amount(amount.unwrap_or_default())
+        .extend_token_ids(token_ids)
+        .extend_update_fields(update_fields)
+        .build()
+        .map_err(|e| anyhow::anyhow!("{e:?}"))
+}
+
 pub fn instruction_to_json<I: InnerInstruction + Serialize>(inst: &I) -> Result<String> {
     serde_json::to_string(inst).map_err(|e| anyhow::anyhow!("{e:?}"))
 }
@@ -124,7 +142,7 @@ async fn test_create_inst_builder() {
     .map_err(|e| e.to_string())
     .unwrap();
 
-    let res = serde_json::to_string_pretty(&create_instruction)
+    let res = serde_json::to_string(&create_instruction)
         .map_err(|e| e.to_string())
         .unwrap();
 
