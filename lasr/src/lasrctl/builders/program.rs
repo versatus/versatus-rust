@@ -11,7 +11,7 @@ pub enum MethodStrategies {
     Update,
 }
 
-pub fn approve_program(inputs: Inputs) -> Result<String, anyhow::Error> {
+pub fn approve_program(inputs: Inputs) -> Result<serde_json::Value, anyhow::Error> {
     let transaction = &inputs.transaction;
     let txn_inputs = transaction.inputs();
     let program_id = transaction.program_id();
@@ -46,8 +46,25 @@ pub fn approve_program(inputs: Inputs) -> Result<String, anyhow::Error> {
         .build()
         .map_err(|e| anyhow::anyhow!("failed to build computeOutputs: {e:?}"))?;
 
-    let res = serde_json::to_string(&outputs)
+    let res = serde_json::to_value(&outputs)
         .map_err(|e| anyhow::anyhow!("failed to deserialize outputs to JSON: {e:?}"))?;
 
     Ok(res)
+}
+
+#[cfg(test)]
+#[tokio::test]
+async fn test_approval() -> Result<(), anyhow::Error> {
+    use crate::examples::blank::example_program::init_program;
+
+    let method = MethodStrategies::Approve;
+    let template_str =
+        include_str!("../../examples/blank/example-program-inputs/blank-create.json");
+
+    let map: Inputs = serde_json::from_str(&template_str)
+        .map_err(|e| anyhow::anyhow!("failed to destructure json template: {e:?}"))?;
+    // A JSON object representative of a LASR Program
+    let program = init_program(method, map);
+    dbg!(&program);
+    Ok(())
 }

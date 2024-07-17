@@ -1,4 +1,4 @@
-mod example_program;
+pub mod example_program;
 use std::{io::Read, path::PathBuf};
 
 pub fn construct_init_template(

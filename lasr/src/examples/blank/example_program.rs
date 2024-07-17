@@ -1,4 +1,14 @@
-use crate::lasrctl::builders::program::Program;
 use lasr_types::*;
 
-pub fn hello_lasr() -> Program {}
+use crate::lasrctl::builders::program::{approve_program, MethodStrategies};
+
+pub fn init_program(
+    method: MethodStrategies,
+    inputs: Inputs,
+) -> Result<serde_json::Value, anyhow::Error> {
+    match method {
+        MethodStrategies::Approve => approve_program(inputs),
+        MethodStrategies::Create => todo!(),
+        MethodStrategies::Update => todo!(),
+    }
+}

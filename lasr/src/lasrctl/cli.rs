@@ -28,20 +28,20 @@ pub enum Command {
     Send(SendArgs),
 }
 
-#[derive(Args, Debug)]
+#[derive(Debug, Args)]
 pub struct InitArgs {
     /// A minimal template to start from scratch
     #[arg(default_value = "false")]
-    blank: bool,
+    pub blank: bool,
     /// A template for creating fungible tokens
     #[arg(default_value = "false")]
-    fungible: bool,
+    pub fungible: bool,
     /// A template for creating non-fungible tokens
     #[arg(default_value = "false")]
-    non_fungible: bool,
+    pub non_fungible: bool,
     /// A template for creating a faucet, allowing users to request test tokens
     #[arg(default_value = "false")]
-    faucet: bool,
+    pub faucet: bool,
 }
 impl InitArgs {
     pub fn blank(&self) -> Option<&str> {
