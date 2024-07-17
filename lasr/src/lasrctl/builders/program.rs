@@ -11,19 +11,18 @@ pub enum MethodStrategies {
     Update,
 }
 
-pub fn approve_program(inputs: Inputs) -> Result<serde_json::Value, anyhow::Error> {
+pub fn approve_program(inputs: Inputs) -> Result<String, anyhow::Error> {
     let transaction = &inputs.transaction;
+    let contract_inputs = &inputs.inputs;
     let txn_inputs = transaction.inputs();
     let program_id = transaction.program_id();
     let program_address = AddressOrNamespace::Address(program_id);
     let caller = Address::from(transaction.from());
+    let update_val = TokenFieldValue::Data(DataValue::Insert("approvals".to_string(), txn_inputs));
 
     let update = TokenUpdateFieldBuilder::new()
         .field(TokenField::Approvals)
-        .value(
-            serde_json::from_str(&txn_inputs)
-                .map_err(|e| anyhow::anyhow!("failed to parse txn_inputs: {e:?}"))?,
-        )
+        .value(update_val)
         .build()
         .map_err(|e| anyhow::anyhow!("failed to build update_field: {e:?}"))?;
 
@@ -46,10 +45,17 @@ pub fn approve_program(inputs: Inputs) -> Result<serde_json::Value, anyhow::Erro
         .build()
         .map_err(|e| anyhow::anyhow!("failed to build computeOutputs: {e:?}"))?;
 
-    let res = serde_json::to_value(&outputs)
-        .map_err(|e| anyhow::anyhow!("failed to deserialize outputs to JSON: {e:?}"))?;
+    let obj = serde_json::to_string_pretty(&outputs).unwrap();
 
-    Ok(res)
+    Ok(obj)
+}
+
+pub fn create_program(inputs: Inputs) -> Result<serde_json::Value, anyhow::Error> {
+    let transaction = inputs.transaction;
+    let txn_inputs: String = transaction.inputs().into();
+    let from = transaction.from();
+    let symbol = txn_inputs.parse().map();
+    Ok(())
 }
 
 #[cfg(test)]
@@ -64,7 +70,8 @@ async fn test_approval() -> Result<(), anyhow::Error> {
     let map: Inputs = serde_json::from_str(&template_str)
         .map_err(|e| anyhow::anyhow!("failed to destructure json template: {e:?}"))?;
     // A JSON object representative of a LASR Program
-    let program = init_program(method, map);
-    dbg!(&program);
+    let program = init_program(method, map).unwrap();
+    println!("{template_str:?}");
+    println!("{program:?}");
     Ok(())
 }
