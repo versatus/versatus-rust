@@ -1,11 +1,11 @@
 use lasr_types::*;
 
-use crate::lasrctl::builders::program::{approve_program, create_program, MethodStrategies};
+use crate::lasrctl::builders::program::{approve_program, create_program, MethodStrategy};
 
-pub fn init_program(method: MethodStrategies, inputs: Inputs) -> Result<String, anyhow::Error> {
+pub fn init_program(method: MethodStrategy, inputs: Inputs) -> Result<String, anyhow::Error> {
     match method {
-        MethodStrategies::Approve => approve_program(inputs),
-        MethodStrategies::Create => create_program(inputs),
-        MethodStrategies::Update => todo!(),
+        MethodStrategy::Approve => approve_program(inputs),
+        MethodStrategy::Create => create_program(inputs),
+        MethodStrategy::Update => todo!(),
     }
 }

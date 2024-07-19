@@ -109,7 +109,7 @@ pub async fn lasr_init(init_args: &InitArgs) -> anyhow::Result<()> {
     } = init_args;
 
     if *blank {
-        let method = MethodStrategies::Approve;
+        let method = MethodStrategies::Create;
         let template_str =
             include_str!("./examples/blank/example-program-inputs/blank-create.json");
         // probably what you want to do is deserialize the json into the lasr types first, then format them into a String.
@@ -118,14 +118,14 @@ pub async fn lasr_init(init_args: &InitArgs) -> anyhow::Result<()> {
         let map: Inputs = serde_json::from_str(&template_str)
             .map_err(|e| anyhow::anyhow!("failed to destructure json template: {e:?}"))?;
 
-        let transaction = &map.transaction;
-        let txn_type = &map.transaction.transaction_type();
-        let acct_info = &map.account_info;
+        // let transaction = &map.transaction;
+        // let txn_type = &map.transaction.transaction_type();
+        // let acct_info = &map.account_info;
 
-        let acct_type = &acct_info.account_type();
-        let programs = acct_info.programs();
-        let program_acct_data = acct_info.program_account_data();
-        let program_acct_meta = acct_info.program_account_metadata();
+        // let acct_type = &acct_info.account_type();
+        // let programs = acct_info.programs();
+        // let program_acct_data = acct_info.program_account_data();
+        // let program_acct_meta = acct_info.program_account_metadata();
 
         // A JSON object representative of a LASR Program
         let program = init_program(method, map);
