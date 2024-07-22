@@ -1,11 +1,76 @@
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr};
 
 use anyhow::Ok;
 use lasr_types::*;
 use serde::{Deserialize, Serialize};
 
-pub struct Program {
-    method_strategies: MethodStrategy,
+pub struct Program<Inputs> {
+    method_strategies: HashMap<String, Box<dyn Fn(&Inputs) -> String>>,
+}
+
+impl Program<Inputs> {
+    pub fn new() -> Self {
+        let mut program = Program {
+            method_strategies: HashMap::new(),
+        };
+
+        // Register default methods
+        program.register_contract_method("approve".to_string(), Box::new(Program::approve));
+        program.register_contract_method("create".to_string(), Box::new(Program::create));
+        program.register_contract_method("update".to_string(), Box::new(Program::update));
+
+        program
+    }
+
+    fn register_contract_method(
+        &mut self,
+        operation: String,
+        method: Box<dyn Fn(&Inputs) -> String>,
+    ) {
+        self.method_strategies.insert(operation, method);
+    }
+
+    fn approve(inputs: &Inputs) -> String {
+        approve_program(inputs.clone())
+            .map_err(|e| anyhow::anyhow!("failed to approve lasr program: {e:?}"))
+            .unwrap()
+    }
+
+    fn create(inputs: &Inputs) -> String {
+        create_program(inputs.clone())
+            .map_err(|e| anyhow::anyhow!("failed to create lasr program: {e:?}"))
+            .unwrap()
+    }
+
+    fn update(inputs: &Inputs) -> String {
+        update_program(inputs.clone())
+            .map_err(|e| anyhow::anyhow!("failed to update lasr program: {e:?}"))
+            .unwrap()
+    }
+
+    pub fn execute_method(&self, inputs: &Inputs) -> Result<String, anyhow::Error> {
+        match self.method_strategies.get(&inputs.op) {
+            Some(strategy) => Ok(strategy(inputs)),
+            None => Err(anyhow::anyhow!("Invalid method strategy")),
+        }
+    }
+
+    fn start(&self, compute_inputs: &Inputs) -> Result<String, anyhow::Error> {
+        self.execute_method(compute_inputs)
+    }
+
+    fn run() {
+        use std::io::{self, Read};
+
+        let mut input = String::new();
+        io::stdin().read_to_string(&mut input).unwrap();
+
+        let parsed_data: Inputs = serde_json::from_str(&input).unwrap();
+        let program = Program::new();
+        let result = program.start(&parsed_data).unwrap();
+
+        println!("{}", result);
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -13,23 +78,6 @@ pub enum MethodStrategy {
     Approve,
     Create,
     Update,
-}
-
-impl MethodStrategy {
-    pub fn execute_method(&self, inputs: Inputs) -> Result<String, anyhow::Error> {
-        let op = &inputs.op;
-        let strategy: Self = serde_json::from_str(&op)
-            .map_err(|e| anyhow::anyhow!("failed to serialize {op:?} from computeInputs: {e:?}"))?;
-
-        let res = match strategy {
-            MethodStrategy::Approve => approve_program(inputs)
-                .map_err(|e| anyhow::anyhow!("failed to approve program: {e:?}"))?,
-            MethodStrategy::Create => create_program(inputs)
-                .map_err(|e| anyhow::anyhow!("failed to create program: {e:?}"))?,
-            MethodStrategy::Update => todo!(),
-        };
-        Ok(res)
-    }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -237,6 +285,7 @@ async fn test_create() -> Result<(), anyhow::Error> {
         .map_err(|e| anyhow::anyhow!("failed to destructure json template: {e:?}"))?;
 
     let program = init_program(method, map).unwrap();
+
     println!("{program:?}");
     Ok(())
 }
