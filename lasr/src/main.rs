@@ -78,23 +78,6 @@ use std::result;
 use anyhow::Ok;
 use lasr_types::*;
 
-fn main() -> anyhow::Result<()> {
-    let mut input = String::new();
-    std::io::stdin().read_to_string(&mut input)?;
-
-    let compute_inputs: Inputs = serde_json::from_str(&input)?;
-    let result = Batman::hello(compute_inputs)?;
-    // let result = program
-    //     .execute_method(&compute_inputs)
-    //     .map_err(|e| e.to_string())
-    //     .unwrap();
-
-    let json_output = serde_json::to_string(&result)?;
-    println!("{json_output}");
-
-    Ok(())
-}
-
 // #[tokio::main]
 // async fn main() -> anyhow::Result<()> {
 //     let lasr_url = LASR_RPC_URL_STABLE;

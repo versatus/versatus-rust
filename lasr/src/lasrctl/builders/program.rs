@@ -219,21 +219,26 @@ pub fn update_program(inputs: Inputs) -> Result<String, anyhow::Error> {
         program_updates.push(update_field)
     };
 
-    while let mut linked_program = linked_programs.clone().unwrap_or_default().iter() {
-        let update_field_val = ProgramFieldValue::LinkedPrograms(LinkedProgramsValue::Insert(
-            *linked_program
-                .next()
-                .expect("failed to insert linked program"),
-        ));
+    let linked_program = linked_programs.clone().unwrap_or_default();
+    loop {
+        if linked_program.is_empty() {
+            break;
+        } else {
+            let mut map = linked_program.iter();
+            let update_field_val = ProgramFieldValue::LinkedPrograms(LinkedProgramsValue::Insert(
+                *map.next().expect("failed to insert linked program"),
+            ));
+            let update_field = ProgramUpdateFieldBuilder::new()
+                .field(ProgramField::LinkedPrograms)
+                .value(update_field_val)
+                .build()
+                .map_err(|e| anyhow::anyhow!("failed to build program update field: {e:?}"))?;
 
-        let update_field = ProgramUpdateFieldBuilder::new()
-            .field(ProgramField::LinkedPrograms)
-            .value(update_field_val)
-            .build()
-            .map_err(|e| anyhow::anyhow!("failed to build program update field: {e:?}"))?;
-
-        program_updates.push(update_field);
+            program_updates.push(update_field);
+        }
     }
+
+    println!("{program_updates:?}");
 
     let update_instruction = UpdateInstructionBuilder::new()
         .add_update(TokenOrProgramUpdate::ProgramUpdate(
@@ -259,49 +264,60 @@ pub fn update_program(inputs: Inputs) -> Result<String, anyhow::Error> {
 #[cfg(test)]
 #[tokio::test]
 async fn test_approval() -> Result<(), anyhow::Error> {
-    use crate::examples::blank::example_program::init_program;
-
-    let method = MethodStrategy::Approve;
     let template_str =
-        include_str!("../../examples/blank/example-program-inputs/blank-create.json");
+        include_str!("../../examples/fungible/example-program-inputs/fungible-approve.json");
 
-    let map: Inputs = serde_json::from_str(&template_str)
+    let compute_inputs: Inputs = serde_json::from_str(&template_str)
         .map_err(|e| anyhow::anyhow!("failed to destructure json template: {e:?}"))?;
-    // A JSON object representative of a LASR Program
-    let program = init_program(method, map).unwrap();
-    println!("{program:?}");
+
+    let program = Program::new();
+    let result = program
+        .start(&compute_inputs)
+        .map_err(|e| e.to_string())
+        .unwrap();
+
+    let json_output = serde_json::to_string(&result)?;
+    println!("{json_output}");
+
     Ok(())
 }
 
 #[tokio::test]
 async fn test_create() -> Result<(), anyhow::Error> {
-    use crate::examples::blank::example_program::init_program;
-
-    let method = MethodStrategy::Create;
     let template_str =
-        include_str!("../../examples/blank/example-program-inputs/blank-create.json");
+        include_str!("../../examples/fungible/example-program-inputs/fungible-create.json");
 
-    let map: Inputs = serde_json::from_str(&template_str)
+    let compute_inputs: Inputs = serde_json::from_str(&template_str)
         .map_err(|e| anyhow::anyhow!("failed to destructure json template: {e:?}"))?;
 
-    let program = init_program(method, map).unwrap();
+    let program = Program::new();
+    let result = program
+        .start(&compute_inputs)
+        .map_err(|e| e.to_string())
+        .unwrap();
 
-    println!("{program:?}");
+    let json_output = serde_json::to_string(&result)?;
+    println!("{json_output}");
+
     Ok(())
 }
 
 #[tokio::test]
 async fn test_update() -> Result<(), anyhow::Error> {
-    use crate::examples::blank::example_program::init_program;
-
-    let method = MethodStrategy::Approve;
     let template_str =
-        include_str!("../../examples/blank/example-program-inputs/blank-update.json");
+        include_str!("../../examples/fungible/example-program-inputs/fungible-update.json");
 
-    let map: Inputs = serde_json::from_str(&template_str)
+    let compute_inputs: Inputs = serde_json::from_str(&template_str)
         .map_err(|e| anyhow::anyhow!("failed to destructure json template: {e:?}"))?;
 
-    let program = init_program(method, map).unwrap();
-    println!("{program:?}");
+    let program = Program::new();
+    let result = program
+        .start(&compute_inputs)
+        .map_err(|e| e.to_string())
+        .unwrap();
+
+    let json_output = serde_json::to_string(&result)?;
+    println!("{json_output}");
+
     Ok(())
 }

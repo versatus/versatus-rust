@@ -1,18 +1,9 @@
-use anyhow::Ok;
-use lasr_types::*;
-use serde::{Deserialize, Serialize};
-
 use crate::lasrctl::builders::program::{
     approve_program, create_program, update_program, MethodStrategy, Program,
 };
-
-pub fn init_program(method: MethodStrategy, inputs: Inputs) -> Result<String, anyhow::Error> {
-    match method {
-        MethodStrategy::Approve => approve_program(inputs),
-        MethodStrategy::Create => create_program(inputs),
-        MethodStrategy::Update => update_program(inputs),
-    }
-}
+use anyhow::Ok;
+use lasr_types::*;
+use std::io::Read;
 
 pub struct Batman {
     program: Program<Inputs>,
@@ -27,4 +18,24 @@ impl Batman {
 
         Ok(outputs)
     }
+}
+
+#[allow(dead_code)]
+/// A minimalistic main function for a Rust LASR program.
+/// Takes in lasr_type::Inputs, handles the call based on the program method, and produces necessary lasr_types::Outputs to be processed by protocol
+fn main() -> anyhow::Result<()> {
+    let mut input = String::new();
+    std::io::stdin().read_to_string(&mut input)?;
+
+    let compute_inputs: Inputs = serde_json::from_str(&input)?;
+    let program = Program::new();
+    let result = program
+        .execute_method(&compute_inputs)
+        .map_err(|e| e.to_string())
+        .unwrap();
+
+    let json_output = serde_json::to_string(&result)?;
+    println!("{json_output}");
+
+    Ok(())
 }
