@@ -219,15 +219,10 @@ pub fn update_program(inputs: Inputs) -> Result<String, anyhow::Error> {
         program_updates.push(update_field)
     };
 
-    let linked_program = linked_programs.clone().unwrap_or_default();
-    loop {
-        if linked_program.is_empty() {
-            break;
-        } else {
-            let mut map = linked_program.iter();
-            let update_field_val = ProgramFieldValue::LinkedPrograms(LinkedProgramsValue::Insert(
-                *map.next().expect("failed to insert linked program"),
-            ));
+    if linked_programs.is_some() {
+        for linked_program in linked_programs.unwrap() {
+            let update_field_val =
+                ProgramFieldValue::LinkedPrograms(LinkedProgramsValue::Insert(linked_program));
             let update_field = ProgramUpdateFieldBuilder::new()
                 .field(ProgramField::LinkedPrograms)
                 .value(update_field_val)
