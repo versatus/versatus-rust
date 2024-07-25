@@ -1,18 +1,14 @@
-use crate::lasrctl::builders::program::{
-    approve_program, create_program, update_program, MethodStrategy, Program,
-};
+use crate::lasrctl::builders::program::Program;
 use anyhow::Ok;
 use lasr_types::*;
 use std::io::Read;
 
-pub struct Batman {
-    program: Program<Inputs>,
-}
+pub struct BlankProgram {}
 
-impl Batman {
+impl BlankProgram {
     pub fn hello(inputs: Inputs) -> Result<String, anyhow::Error> {
-        let batman = Program::new();
-        let outputs = batman
+        let blank = Program::new();
+        let outputs = blank
             .execute_method(&inputs)
             .map_err(|e| anyhow::anyhow!("failed to update program: {e:?}"))?;
 

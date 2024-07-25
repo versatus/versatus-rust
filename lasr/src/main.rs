@@ -63,37 +63,42 @@
 //! your program if they knew almost nothing about LASR.
 
 use clap::Parser;
-use lasr_rust::examples::blank::example_program::{init_program, Batman};
-use lasr_rust::lasrctl::builders::program::{MethodStrategy, Program};
+use lasr_rust::lasrctl::builders::program::Program;
+use lasr_rust::lasrctl::cli::LasrCommand;
 use lasr_rust::{
     lasrctl::{
-        cli::{Command, InitArgs, LasrCtl},
+        cli::{InitArgs, LasrCtl},
         network::client::NetworkClient,
     },
     scripts::consts::{LASR_RPC_URL_STABLE, VIPFS_URL},
 };
-use std::io::Read;
-use std::result;
+use std::fs;
+use std::io::Write;
+use std::path::Path;
 
 use anyhow::Ok;
 use lasr_types::*;
 
-// #[tokio::main]
-// async fn main() -> anyhow::Result<()> {
-//     let lasr_url = LASR_RPC_URL_STABLE;
-//     let ipfs_url = VIPFS_URL;
-//     let lasr_network = NetworkClient::new(lasr_url.to_string());
-//     let ipfs_network = NetworkClient::new(ipfs_url.to_string());
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let lasr_url = LASR_RPC_URL_STABLE;
+    let ipfs_url = VIPFS_URL;
+    let lasr_network = NetworkClient::new(lasr_url.to_string());
+    let ipfs_network = NetworkClient::new(ipfs_url.to_string());
 
-//     match LasrCtl::parse().command() {
-//         Command::Init(init_args) => {
-//             println!("{init_args:?}");
-//             lasr_init(init_args).await
-//         } // lasr_init(init_args)?,
-//         _ => todo!("this command is not added yet..."), // lasr_XXXX(XXXX_args)?,
-//                                                         // etc,
-//     }
-// }
+    match LasrCtl::parse().command() {
+        LasrCommand::Init(init_args) => lasr_init(init_args)
+            .await
+            .map_err(|e| anyhow::anyhow!("failed to initalize LASR program: {e:?}"))?,
+        LasrCommand::Build(_) => todo!(),
+        LasrCommand::Test(_) => todo!(),
+        LasrCommand::Deploy(_) => todo!(),
+        LasrCommand::Call(_) => todo!(),
+        LasrCommand::Send(_) => todo!(),
+    }
+
+    Ok(())
+}
 
 // cargo install lasr-rust
 // 1. download the cli binary
@@ -106,85 +111,102 @@ use lasr_types::*;
 // src
 // |
 // ---main.rs (should contain the blank program)
-// pub async fn lasr_init(init_args: &InitArgs) -> anyhow::Result<()> {
-//     let InitArgs {
-//         blank,
-//         fungible,
-//         non_fungible,
-//         faucet,
-//     } = init_args;
+pub async fn lasr_init(init_args: &InitArgs) -> anyhow::Result<()> {
+    let InitArgs {
+        blank,
+        fungible,
+        non_fungible,
+        faucet,
+    } = init_args;
 
-//     if *blank {
-//         let method = MethodStrategy::Create;
-//         let template_str =
-//             include_str!("./examples/blank/example-program-inputs/blank-create.json");
-//         // probably what you want to do is deserialize the json into the lasr types first, then format them into a String.
-//         // After you have the string you can just call the function I made below: init_template(template)?;
-//         // See my comments in that function..
-//         let map: Inputs = serde_json::from_str(&template_str)
-//             .map_err(|e| anyhow::anyhow!("failed to destructure json template: {e:?}"))?;
+    if *blank {
+        let project_dir = "lasrcli/";
 
-//         // let transaction = &map.transaction;
-//         // let txn_type = &map.transaction.transaction_type();
-//         // let acct_info = &map.account_info;
+        let json_content =
+            include_str!("./examples/blank/example-program-inputs/blank-create.json");
 
-//         // let acct_type = &acct_info.account_type();
-//         // let programs = acct_info.programs();
-//         // let program_acct_data = acct_info.program_account_data();
-//         // let program_acct_meta = acct_info.program_account_metadata();
+        let example_program = include_str!("./examples/blank/example_program.rs");
 
-//         // A JSON object representative of a LASR Program
-//         let program = init_program(method, map);
-//     } else if *fungible {
-//     } else if *non_fungible {
-//     } else if *faucet {
-//     } else {
-//         return Ok(());
-//     }
-//     // deserialize the json file for blank into the rust types in lasr_types
-//     // write them to the designated file, name it what it needs to be named
-//     // likely since it's a rust program you'll need to use cargo to create a new project
-//     // you can do this using std::process::Command which allows you to use the user's system
-//     // to call programs the user has access to. If you didn't want to have to do it manually
-//     // that way you could also just write some shell script and call that using std::process::Command (both are acceptable, neither is better than the other).
-//     // would look kinda like:
-//     // let blank_template = serde_json::deserialize("blank-create.json").unwrap(); // this isn't correct I forgot what the command is
-//     // std::process::Command::new("cargo").arg("new").arg("--bin").arg("--path <path_to_folder>").output().unwrap();
-//     // std::process::Command::new("cargo").arg("add").arg("lasr_types").output().unwrap();
+        if let Err(e) = init_template(&project_dir, &json_content, &example_program) {
+            eprintln!("Error initializing LASR program: {:?}", e);
+        } else {
+            println!("Initialization completed successfully!");
+        }
+    } else if *fungible {
+    } else if *non_fungible {
+    } else if *faucet {
+    } else {
+        return Ok(());
+    }
+    // deserialize the json file for blank into the rust types in lasr_types
+    // write them to the designated file, name it what it needs to be named
+    // likely since it's a rust program you'll need to use cargo to create a new project
+    // you can do this using std::process::Command which allows you to use the user's system
+    // to call programs the user has access to. If you didn't want to have to do it manually
+    // that way you could also just write some shell script and call that using std::process::Command (both are acceptable, neither is better than the other).
+    // would look kinda like:
+    // let blank_template = serde_json::deserialize("blank-create.json").unwrap(); // this isn't correct I forgot what the command is
+    // std::process::Command::new("cargo").arg("new").arg("--bin").arg("--path <path_to_folder>").output().unwrap();
+    // std::process::Command::new("cargo").arg("add").arg("lasr_types").output().unwrap();
 
-//     Ok(())
-// }
-// fn init_template(_template: String) -> anyhow::Result<()> {
-//     // this does not yet include writing the template code into a rust module
-//     // or including the module in a module tree.
-//     // it may be sufficient to overwrite the main.rs file with it
-//     cargo_command!("init")?;
-//     // This still needs to be added to the cargo registry... (crates.io)
-//     // 'cargo add lasr_types' fails
-//     cargo_command!("add", "--git", "https://github.com/versatus/lasr.git")?;
-//     Ok(())
-// }
-// #[macro_export]
-// macro_rules! cargo_command {
-//     ($($arg:expr),*) => {{
-//         let mut command = std::process::Command::new("cargo");
-//         $(command.arg($arg);)*
-//         match command.output() {
-//             Ok(o) => Ok(o),
-//             Err(e) => {
-//                 use std::fmt::Write;
-//                 let args = [$($arg,)*];
-//                 let mut args_str = String::with_capacity(args.len());
-//                 args.iter()
-//                     .for_each(|arg| write!(args_str, "{arg} ").expect("failed to write cargo args into string buffer."));
-//                 Err(std::io::Error::new(
-//                     std::io::ErrorKind::Other,
-//                     format!(
-//                         "cargo command failed: cargo {}\nError: {e:?}",
-//                         args_str
-//                     ),
-//                 ))
-//             }
-//         }
-//     }};
-// }
+    Ok(())
+}
+
+fn init_template(
+    project_dir: &str,
+    json_content: &str,
+    example_program: &str,
+) -> anyhow::Result<()> {
+    fs::create_dir_all(project_dir)?;
+
+    let src_dir = Path::new(project_dir).join("src");
+    fs::create_dir_all(&src_dir)?;
+
+    let json_file_path = Path::new(project_dir).join("config.json");
+    let mut json_file = fs::File::create(json_file_path)?;
+    json_file.write_all(json_content.as_bytes())?;
+
+    let main_rs_path = src_dir.join("main.rs");
+    let mut main_rs_file = fs::File::create(main_rs_path)?;
+    main_rs_file.write_all(example_program.as_bytes())?;
+
+    // Run `cargo init` to initialize the project as a cargo project
+    let output = std::process::Command::new("cargo")
+        .arg("init")
+        .arg("--bin")
+        .arg(project_dir)
+        .output()?;
+    if output.status.success() {
+        println!("Successfully initalized LASR application folder");
+    } else {
+        eprintln!("Failed to initalized LASR application folder");
+        eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
+    }
+
+    Ok(())
+}
+
+#[macro_export]
+macro_rules! cargo_command {
+    ($($arg:expr),*) => {{
+        let mut command = std::process::Command::new("cargo");
+        $(command.arg($arg);)*
+        match command.output() {
+            std::result::Result::Ok(o) => Ok(o),
+            Err(e) => {
+                use std::fmt::Write;
+                let args = [$($arg,)*];
+                let mut args_str = String::with_capacity(args.len());
+                args.iter()
+                    .for_each(|arg| write!(args_str, "{arg} ").expect("failed to write cargo args into string buffer."));
+                Err(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    format!(
+                        "cargo command failed: cargo {}\nError: {e:?}",
+                        args_str
+                    ),
+                ))
+            }
+        }
+    }};
+}

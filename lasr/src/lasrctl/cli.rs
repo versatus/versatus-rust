@@ -4,16 +4,16 @@ use clap::{Args, Parser, Subcommand};
 #[clap(name = "lasr-rust", version = "1.0", about = "LASR Rust SDK")]
 pub struct LasrCtl {
     #[clap(subcommand)]
-    command: Command,
+    command: LasrCommand,
 }
 impl LasrCtl {
-    pub fn command(&self) -> &Command {
+    pub fn command(&self) -> &LasrCommand {
         &self.command
     }
 }
 
 #[derive(Subcommand, Debug)]
-pub enum Command {
+pub enum LasrCommand {
     /// Initialize a project with an example program
     Init(InitArgs),
     /// Build the project with the specified contract

@@ -138,13 +138,12 @@ pub fn create_program(inputs: Inputs) -> Result<String, anyhow::Error> {
     let from = transaction.from();
     let txn_inputs: TransactionInputs = serde_json::from_str(transaction.inputs().as_str())?;
 
-    let symbol = txn_inputs.symbol;
-    let name = txn_inputs.name;
     let total_supply = txn_inputs.total_supply.unwrap_or_default();
     let initialized_supply = txn_inputs.initialized_supply.unwrap_or_default();
 
-    let metadata_str = serde_json::to_string(&(symbol, name, total_supply.clone()))
-        .map_err(|e| anyhow::anyhow!("failed to serialize txn metadata: {e:?}"))?;
+    let metadata_str =
+        serde_json::to_string(&(txn_inputs.symbol, txn_inputs.name, total_supply.clone()))
+            .map_err(|e| anyhow::anyhow!("failed to serialize txn metadata: {e:?}"))?;
     let update_field_val =
         ProgramFieldValue::Metadata(MetadataValue::Insert("metadata".to_string(), metadata_str));
 
@@ -188,13 +187,10 @@ pub fn create_program(inputs: Inputs) -> Result<String, anyhow::Error> {
 pub fn update_program(inputs: Inputs) -> Result<String, anyhow::Error> {
     let transaction = &inputs.transaction;
     let txn_inputs: TransactionInputs = serde_json::from_str(transaction.inputs().as_str())?;
-    let data = txn_inputs.data;
-    let metadata = txn_inputs.metadata;
-    let linked_programs = txn_inputs.linked_programs;
 
     let mut program_updates = Vec::new();
 
-    if let Some(metadata) = metadata {
+    if let Some(metadata) = txn_inputs.metadata {
         let update_field_val =
             ProgramFieldValue::Metadata(MetadataValue::Insert("metadata".to_string(), metadata));
 
@@ -207,7 +203,7 @@ pub fn update_program(inputs: Inputs) -> Result<String, anyhow::Error> {
         program_updates.push(update_field)
     };
 
-    if let Some(data) = data {
+    if let Some(data) = txn_inputs.data {
         let update_field_val = ProgramFieldValue::Data(DataValue::Insert("data".to_string(), data));
 
         let update_field = ProgramUpdateFieldBuilder::new()
@@ -219,8 +215,8 @@ pub fn update_program(inputs: Inputs) -> Result<String, anyhow::Error> {
         program_updates.push(update_field)
     };
 
-    if linked_programs.is_some() {
-        for linked_program in linked_programs.unwrap() {
+    if txn_inputs.linked_programs.is_some() {
+        for linked_program in txn_inputs.linked_programs.unwrap() {
             let update_field_val =
                 ProgramFieldValue::LinkedPrograms(LinkedProgramsValue::Insert(linked_program));
             let update_field = ProgramUpdateFieldBuilder::new()
@@ -232,8 +228,6 @@ pub fn update_program(inputs: Inputs) -> Result<String, anyhow::Error> {
             program_updates.push(update_field);
         }
     }
-
-    println!("{program_updates:?}");
 
     let update_instruction = UpdateInstructionBuilder::new()
         .add_update(TokenOrProgramUpdate::ProgramUpdate(
