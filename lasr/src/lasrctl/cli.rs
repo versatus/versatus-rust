@@ -5,7 +5,7 @@ use std::{
 };
 
 use anyhow::{anyhow, bail};
-use clap::{ArgAction, ArgMatches, Args, Parser, Subcommand};
+use clap::{ArgAction, Args, Parser, Subcommand};
 
 #[derive(Debug, Parser)]
 #[clap(name = "lasr-rust", version = "1.0", about = "LASR Rust SDK")]
@@ -38,16 +38,16 @@ pub enum LasrCommand {
 #[derive(Debug, Args)]
 pub struct InitArgs {
     /// A minimal template to start from scratch
-    #[arg(required = false, action = ArgAction::SetFalse)]
+    #[arg(required = false, default_value = "false", action = ArgAction::Set)]
     pub blank: bool,
     /// A template for creating fungible tokens
-    #[arg(required = false, action = ArgAction::SetFalse)]
+    #[arg(required = false, default_value = "false", action = ArgAction::Set)]
     pub fungible: bool,
     /// A template for creating non-fungible tokens
-    #[arg(required = false, action = ArgAction::SetFalse)]
+    #[arg(required = false, default_value = "false", action = ArgAction::Set)]
     pub non_fungible: bool,
     /// A template for creating a faucet, allowing users to request test tokens
-    #[arg(required = false, action = ArgAction::SetFalse)]
+    #[arg(required = false, default_value = "false", action = ArgAction::Set)]
     pub faucet: bool,
 }
 impl InitArgs {
@@ -112,11 +112,85 @@ impl InitArgs {
                     Ok(())
                 }
             }
-            InitArgs { fungible: true, .. } => todo!(),
+            InitArgs { fungible: true, .. } => {
+                let project_dir = &env::current_dir()?;
+
+                if !project_dir.is_dir() {
+                    bail!(format!("{project_dir:?} is not a valid directory."));
+                }
+
+                dbg!(
+                    "\nUsing project directory at {}",
+                    project_dir.canonicalize()?.display()
+                );
+
+                let json_content = include_str!(
+                    "../examples/fungible/example-program-inputs/fungible-create.json"
+                );
+
+                let example_program = include_str!("../examples/fungible/example_program.rs");
+
+                if let Err(e) = Self::init_template(&project_dir, &json_content, &example_program) {
+                    eprintln!("Error initializing LASR program: {e:?}");
+                    Ok(())
+                } else {
+                    println!("Initialization completed successfully!");
+                    Ok(())
+                }
+            }
             InitArgs {
                 non_fungible: true, ..
-            } => todo!(),
-            InitArgs { faucet: true, .. } => todo!(),
+            } => {
+                let project_dir = &env::current_dir()?;
+
+                if !project_dir.is_dir() {
+                    bail!(format!("{project_dir:?} is not a valid directory."));
+                }
+
+                dbg!(
+                    "\nUsing project directory at {}",
+                    project_dir.canonicalize()?.display()
+                );
+
+                let json_content = include_str!(
+                    "../examples/non_fungible/example-program-inputs/non-fungible-create.json"
+                );
+
+                let example_program = include_str!("../examples/non_fungible/example_program.rs");
+
+                if let Err(e) = Self::init_template(&project_dir, &json_content, &example_program) {
+                    eprintln!("Error initializing LASR program: {e:?}");
+                    Ok(())
+                } else {
+                    println!("Initialization completed successfully!");
+                    Ok(())
+                }
+            }
+            InitArgs { faucet: true, .. } => {
+                let project_dir = &env::current_dir()?;
+
+                if !project_dir.is_dir() {
+                    bail!(format!("{project_dir:?} is not a valid directory."));
+                }
+
+                dbg!(
+                    "\nUsing project directory at {}",
+                    project_dir.canonicalize()?.display()
+                );
+
+                let json_content =
+                    include_str!("../examples/faucet/example-program-inputs/faucet-create.json");
+
+                let example_program = include_str!("../examples/faucet/example_program.rs");
+
+                if let Err(e) = Self::init_template(&project_dir, &json_content, &example_program) {
+                    eprintln!("Error initializing LASR program: {e:?}");
+                    Ok(())
+                } else {
+                    println!("Initialization completed successfully!");
+                    Ok(())
+                }
+            }
             _ => Err(anyhow!("unsupported initialization method")),
         }
     }
