@@ -63,7 +63,6 @@
 //! your program if they knew almost nothing about LASR.
 
 use clap::Parser;
-use lasr_rust::lasrctl::builders::program::Program;
 use lasr_rust::lasrctl::cli::LasrCommand;
 use lasr_rust::{
     lasrctl::{
@@ -72,12 +71,8 @@ use lasr_rust::{
     },
     scripts::consts::{LASR_RPC_URL_STABLE, VIPFS_URL},
 };
-use std::fs;
-use std::io::Write;
-use std::path::Path;
 
 use anyhow::Ok;
-use lasr_types::*;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -87,7 +82,7 @@ async fn main() -> anyhow::Result<()> {
     let ipfs_network = NetworkClient::new(ipfs_url.to_string());
 
     match LasrCtl::parse().command() {
-        LasrCommand::Init(init_args) => lasr_init(init_args)
+        LasrCommand::Init(init_args) => InitArgs::lasr_init(init_args)
             .await
             .map_err(|e| anyhow::anyhow!("failed to initalize LASR program: {e:?}"))?,
         LasrCommand::Build(_) => todo!(),
@@ -111,80 +106,17 @@ async fn main() -> anyhow::Result<()> {
 // src
 // |
 // ---main.rs (should contain the blank program)
-pub async fn lasr_init(init_args: &InitArgs) -> anyhow::Result<()> {
-    let InitArgs {
-        blank,
-        fungible,
-        non_fungible,
-        faucet,
-    } = init_args;
 
-    if *blank {
-        let project_dir = "lasrcli/";
-
-        let json_content =
-            include_str!("./examples/blank/example-program-inputs/blank-create.json");
-
-        let example_program = include_str!("./examples/blank/example_program.rs");
-
-        if let Err(e) = init_template(&project_dir, &json_content, &example_program) {
-            eprintln!("Error initializing LASR program: {:?}", e);
-        } else {
-            println!("Initialization completed successfully!");
-        }
-    } else if *fungible {
-    } else if *non_fungible {
-    } else if *faucet {
-    } else {
-        return Ok(());
-    }
-    // deserialize the json file for blank into the rust types in lasr_types
-    // write them to the designated file, name it what it needs to be named
-    // likely since it's a rust program you'll need to use cargo to create a new project
-    // you can do this using std::process::Command which allows you to use the user's system
-    // to call programs the user has access to. If you didn't want to have to do it manually
-    // that way you could also just write some shell script and call that using std::process::Command (both are acceptable, neither is better than the other).
-    // would look kinda like:
-    // let blank_template = serde_json::deserialize("blank-create.json").unwrap(); // this isn't correct I forgot what the command is
-    // std::process::Command::new("cargo").arg("new").arg("--bin").arg("--path <path_to_folder>").output().unwrap();
-    // std::process::Command::new("cargo").arg("add").arg("lasr_types").output().unwrap();
-
-    Ok(())
-}
-
-fn init_template(
-    project_dir: &str,
-    json_content: &str,
-    example_program: &str,
-) -> anyhow::Result<()> {
-    fs::create_dir_all(project_dir)?;
-
-    let src_dir = Path::new(project_dir).join("src");
-    fs::create_dir_all(&src_dir)?;
-
-    let json_file_path = Path::new(project_dir).join("config.json");
-    let mut json_file = fs::File::create(json_file_path)?;
-    json_file.write_all(json_content.as_bytes())?;
-
-    let main_rs_path = src_dir.join("main.rs");
-    let mut main_rs_file = fs::File::create(main_rs_path)?;
-    main_rs_file.write_all(example_program.as_bytes())?;
-
-    // Run `cargo init` to initialize the project as a cargo project
-    let output = std::process::Command::new("cargo")
-        .arg("init")
-        .arg("--bin")
-        .arg(project_dir)
-        .output()?;
-    if output.status.success() {
-        println!("Successfully initalized LASR application folder");
-    } else {
-        eprintln!("Failed to initalized LASR application folder");
-        eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
-    }
-
-    Ok(())
-}
+// deserialize the json file for blank into the rust types in lasr_types
+// write them to the designated file, name it what it needs to be named
+// likely since it's a rust program you'll need to use cargo to create a new project
+// you can do this using std::process::Command which allows you to use the user's system
+// to call programs the user has access to. If you didn't want to have to do it manually
+// that way you could also just write some shell script and call that using std::process::Command (both are acceptable, neither is better than the other).
+// would look kinda like:
+// let blank_template = serde_json::deserialize("blank-create.json").unwrap(); // this isn't correct I forgot what the command is
+// std::process::Command::new("cargo").arg("new").arg("--bin").arg("--path <path_to_folder>").output().unwrap();
+// std::process::Command::new("cargo").arg("add").arg("lasr_types").output().unwrap();
 
 #[macro_export]
 macro_rules! cargo_command {

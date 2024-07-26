@@ -1,4 +1,11 @@
-use clap::{Args, Parser, Subcommand};
+use std::{
+    env, fs,
+    io::Write,
+    path::{Path, PathBuf},
+};
+
+use anyhow::{anyhow, bail};
+use clap::{ArgAction, ArgMatches, Args, Parser, Subcommand};
 
 #[derive(Debug, Parser)]
 #[clap(name = "lasr-rust", version = "1.0", about = "LASR Rust SDK")]
@@ -31,32 +38,87 @@ pub enum LasrCommand {
 #[derive(Debug, Args)]
 pub struct InitArgs {
     /// A minimal template to start from scratch
-    #[arg(default_value = "false")]
+    #[arg(required = false, action = ArgAction::SetFalse)]
     pub blank: bool,
     /// A template for creating fungible tokens
-    #[arg(default_value = "false")]
+    #[arg(required = false, action = ArgAction::SetFalse)]
     pub fungible: bool,
     /// A template for creating non-fungible tokens
-    #[arg(default_value = "false")]
+    #[arg(required = false, action = ArgAction::SetFalse)]
     pub non_fungible: bool,
     /// A template for creating a faucet, allowing users to request test tokens
-    #[arg(default_value = "false")]
+    #[arg(required = false, action = ArgAction::SetFalse)]
     pub faucet: bool,
 }
 impl InitArgs {
-    pub fn blank(&self) -> Option<&str> {
-        const BLANK_TEMPLATE: &str = "";
-        if self.blank {
-            return Some(BLANK_TEMPLATE);
+    fn init_template(
+        project_dir: &PathBuf,
+        json_content: &str,
+        example_program: &str,
+    ) -> anyhow::Result<()> {
+        fs::create_dir_all(&project_dir)?;
+
+        let src_dir = Path::new(&project_dir).join("src");
+        fs::create_dir_all(&src_dir)?;
+
+        let json_file_path = Path::new(&project_dir).join("example-program-inputs.json");
+        let mut json_file = fs::File::create(json_file_path)?;
+        json_file.write_all(json_content.as_bytes())?;
+
+        let main_rs_path = src_dir.join("main.rs");
+        let mut main_rs_file = fs::File::create(main_rs_path)?;
+        main_rs_file.write_all(example_program.as_bytes())?;
+
+        // Run `cargo init` to initialize the project as a cargo project
+        let output = std::process::Command::new("cargo")
+            .arg("init")
+            .arg("--bin")
+            .arg(project_dir)
+            .output()?;
+        if output.status.success() {
+            println!("Successfully initalized LASR application folder");
+        } else {
+            eprintln!("Failed to initalized LASR application folder");
+            eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
         }
-        None
+
+        Ok(())
     }
-    pub fn template(&self) -> anyhow::Result<Option<&str>> {
-        match (self.blank, self.fungible, self.non_fungible, self.faucet) {
-            (true, false, false, false) => { /* blank */},
-            _ => anyhow::bail!("more than one template option selected, please pass only a single template option to continue."),
+
+    pub async fn lasr_init(init_args: &InitArgs) -> anyhow::Result<()> {
+        match init_args {
+            InitArgs { blank: true, .. } => {
+                let project_dir = &env::current_dir()?;
+
+                if !project_dir.is_dir() {
+                    bail!(format!("{project_dir:?} is not a valid directory."));
+                }
+
+                dbg!(
+                    "\nUsing project directory at {}",
+                    project_dir.canonicalize()?.display()
+                );
+
+                let json_content =
+                    include_str!("../examples/blank/example-program-inputs/blank-create.json");
+
+                let example_program = include_str!("../examples/blank/example_program.rs");
+
+                if let Err(e) = Self::init_template(&project_dir, &json_content, &example_program) {
+                    eprintln!("Error initializing LASR program: {e:?}");
+                    Ok(())
+                } else {
+                    println!("Initialization completed successfully!");
+                    Ok(())
+                }
+            }
+            InitArgs { fungible: true, .. } => todo!(),
+            InitArgs {
+                non_fungible: true, ..
+            } => todo!(),
+            InitArgs { faucet: true, .. } => todo!(),
+            _ => Err(anyhow!("unsupported initialization method")),
         }
-        Ok(None)
     }
 }
 
