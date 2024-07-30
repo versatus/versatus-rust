@@ -1,4 +1,4 @@
-use clap::{ArgAction, Args, Parser};
+use clap::Parser;
 
 use crate::scripts::consts::{KEYPAIR_FILENAME, WALLET_PATH};
 use std::{
@@ -207,4 +207,16 @@ pub fn handle_init_command() {
         println!("Found existing lasr wallet");
         // call the inner function
     }
+}
+
+#[tokio::test]
+async fn test_init_template() {
+    let res = crate::lasrctl::cli::InitArgs::lasr_init(&InitArgs {
+        blank: true,
+        fungible: false,
+        non_fungible: false,
+        faucet: false,
+    })
+    .await;
+    assert!(res.is_ok());
 }
