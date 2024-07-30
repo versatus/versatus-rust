@@ -59,7 +59,7 @@ impl Program<Inputs> {
         self.execute_method(compute_inputs)
     }
 
-    fn run() {
+    pub fn run() {
         use std::io::{self, Read};
 
         let mut input = String::new();
@@ -85,14 +85,36 @@ pub enum MethodStrategy {
     rename(serialize = "transactionInputs", deserialize = "transactionInputs"),
     rename_all = "camelCase"
 )]
-pub struct TransactionInputs {
-    symbol: String,
-    name: String,
+pub struct CreateTransactionInputs {
+    name: Option<String>,
+    symbol: Option<String>,
     total_supply: Option<String>,
     initialized_supply: Option<String>,
-    data: Option<String>,
-    metadata: Option<String>,
+    img_url: Option<String>,
+    payment_program_address: Option<String>,
+    price: Option<String>,
+    collection: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(
+    rename(serialize = "transactionInputs", deserialize = "transactionInputs"),
+    rename_all = "camelCase"
+)]
+/// Structure of transactionInputs specifically for the update method strategy.
+pub struct UpdateTransactionInputs {
+    data: Option<HashMap<String, String>>,
+    metadata: Option<Metadata>,
     linked_programs: Option<Vec<Address>>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Metadata {
+    symbol: Option<String>,
+    name: Option<String>,
+    total_supply: Option<String>,
+    initialized_supply: Option<String>,
 }
 
 pub fn approve_program(inputs: Inputs) -> Result<String, anyhow::Error> {
@@ -136,7 +158,7 @@ pub fn approve_program(inputs: Inputs) -> Result<String, anyhow::Error> {
 pub fn create_program(inputs: Inputs) -> Result<String, anyhow::Error> {
     let transaction = &inputs.transaction;
     let from = transaction.from();
-    let txn_inputs: TransactionInputs = serde_json::from_str(transaction.inputs().as_str())?;
+    let txn_inputs: CreateTransactionInputs = serde_json::from_str(transaction.inputs().as_str())?;
 
     let total_supply = txn_inputs.total_supply.unwrap_or_default();
     let initialized_supply = txn_inputs.initialized_supply.unwrap_or_default();
@@ -186,11 +208,12 @@ pub fn create_program(inputs: Inputs) -> Result<String, anyhow::Error> {
 
 pub fn update_program(inputs: Inputs) -> Result<String, anyhow::Error> {
     let transaction = &inputs.transaction;
-    let txn_inputs: TransactionInputs = serde_json::from_str(transaction.inputs().as_str())?;
+    let txn_inputs: UpdateTransactionInputs = serde_json::from_str(transaction.inputs().as_str())?;
 
     let mut program_updates = Vec::new();
 
     if let Some(metadata) = txn_inputs.metadata {
+        let metadata = serde_json::to_string(&metadata)?;
         let update_field_val =
             ProgramFieldValue::Metadata(MetadataValue::Insert("metadata".to_string(), metadata));
 
@@ -204,6 +227,7 @@ pub fn update_program(inputs: Inputs) -> Result<String, anyhow::Error> {
     };
 
     if let Some(data) = txn_inputs.data {
+        let data = serde_json::to_string(&data)?;
         let update_field_val = ProgramFieldValue::Data(DataValue::Insert("data".to_string(), data));
 
         let update_field = ProgramUpdateFieldBuilder::new()
