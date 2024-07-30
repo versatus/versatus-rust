@@ -1,4 +1,4 @@
-use clap::{ArgAction, Args};
+use clap::{ArgAction, Args, Parser};
 
 use crate::scripts::consts::{KEYPAIR_FILENAME, WALLET_PATH};
 use std::{
@@ -7,19 +7,20 @@ use std::{
     path::{Path, PathBuf},
 };
 
-#[derive(Debug, Args)]
+#[derive(Debug, Parser)]
+#[clap(bin_name = "lasr init")]
 pub struct InitArgs {
     /// A minimal template to start from scratch
-    #[arg(required = false, default_value = "false", action = ArgAction::Set)]
+    #[clap(long)]
     pub blank: bool,
     /// A template for creating fungible tokens
-    #[arg(required = false, default_value = "false", action = ArgAction::Set)]
+    #[clap(long)]
     pub fungible: bool,
     /// A template for creating non-fungible tokens
-    #[arg(required = false, default_value = "false", action = ArgAction::Set)]
+    #[clap(long)]
     pub non_fungible: bool,
     /// A template for creating a faucet, allowing users to request test tokens
-    #[arg(required = false, default_value = "false", action = ArgAction::Set)]
+    #[clap(long)]
     pub faucet: bool,
 }
 impl InitArgs {
