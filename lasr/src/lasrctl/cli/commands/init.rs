@@ -1,6 +1,5 @@
-use clap::Parser;
-
 use crate::scripts::consts::{KEYPAIR_FILENAME, WALLET_PATH};
+use clap::Parser;
 use std::{
     env, fs,
     io::{self, Write},
@@ -38,10 +37,6 @@ impl InitArgs {
         let mut json_file = fs::File::create(json_file_path)?;
         json_file.write_all(json_content.as_bytes())?;
 
-        let main_rs_path = src_dir.join("main.rs");
-        let mut main_rs_file = fs::File::create(main_rs_path)?;
-        main_rs_file.write_all(example_program.as_bytes())?;
-
         // Run `cargo init` to initialize the project as a cargo project
         let output = std::process::Command::new("cargo")
             .arg("init")
@@ -49,6 +44,11 @@ impl InitArgs {
             .arg(project_dir)
             .output()?;
         if output.status.success() {
+            let main_rs_path = src_dir.join("main.rs");
+            let mut main_rs_file = fs::File::create(main_rs_path)?;
+            main_rs_file.write_all(example_program.as_bytes())?;
+            // TODO: Edit .toml file here.... to include all necessary deps.
+
             println!("Successfully initalized LASR application folder");
         } else {
             eprintln!("Failed to initalized LASR application folder");
