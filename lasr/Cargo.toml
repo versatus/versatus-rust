@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0"
 clap = { version = "4.5.7", features = [ "derive" ] }
+jsonrpsee = { version = "0.22.5", features = ["http-client"] }
 lasr_types = { git = "https://github.com/versatus/lasr" }
 lasr_wallet = { git = "https://github.com/versatus/lasr" }
 lasr_rpc = { git = "http://github.com/versatus/lasr" }

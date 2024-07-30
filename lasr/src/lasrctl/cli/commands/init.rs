@@ -1,5 +1,7 @@
 use crate::scripts::consts::{KEYPAIR_FILENAME, WALLET_PATH};
 use clap::Parser;
+use jsonrpsee::http_client::HttpClient;
+use lasr_wallet::Wallet;
 use std::{
     env, fs,
     io::{self, Write},
@@ -58,20 +60,24 @@ impl InitArgs {
         Ok(())
     }
 
-    pub async fn lasr_init(init_args: &InitArgs) -> anyhow::Result<()> {
+    pub fn lasr_init(init_args: &InitArgs) -> anyhow::Result<()> {
+        let project_dir = &env::current_dir()?;
+        if !project_dir.is_dir() {
+            anyhow::bail!(format!("{project_dir:?} is not a valid directory."));
+        }
+
+        dbg!(
+            "\nUsing project directory at {}",
+            project_dir.canonicalize()?.display()
+        );
+
+        let keypair_dir = Path::new(&project_dir).join(".lasr");
+        fs::create_dir_all(&keypair_dir)?;
+
+        create_new_keypair(keypair_dir);
+
         match init_args {
             InitArgs { blank: true, .. } => {
-                let project_dir = &env::current_dir()?;
-
-                if !project_dir.is_dir() {
-                    anyhow::bail!(format!("{project_dir:?} is not a valid directory."));
-                }
-
-                dbg!(
-                    "\nUsing project directory at {}",
-                    project_dir.canonicalize()?.display()
-                );
-
                 let json_content = include_str!(
                     "../../../examples/blank/example-program-inputs/blank-create.json"
                 );
@@ -87,17 +93,6 @@ impl InitArgs {
                 }
             }
             InitArgs { fungible: true, .. } => {
-                let project_dir = &env::current_dir()?;
-
-                if !project_dir.is_dir() {
-                    anyhow::bail!(format!("{project_dir:?} is not a valid directory."));
-                }
-
-                dbg!(
-                    "\nUsing project directory at {}",
-                    project_dir.canonicalize()?.display()
-                );
-
                 let json_content = include_str!(
                     "../../../examples/fungible/example-program-inputs/fungible-create.json"
                 );
@@ -115,17 +110,6 @@ impl InitArgs {
             InitArgs {
                 non_fungible: true, ..
             } => {
-                let project_dir = &env::current_dir()?;
-
-                if !project_dir.is_dir() {
-                    anyhow::bail!(format!("{project_dir:?} is not a valid directory."));
-                }
-
-                dbg!(
-                    "\nUsing project directory at {}",
-                    project_dir.canonicalize()?.display()
-                );
-
                 let json_content = include_str!(
                     "../../../examples/non_fungible/example-program-inputs/non-fungible-create.json"
                 );
@@ -142,17 +126,6 @@ impl InitArgs {
                 }
             }
             InitArgs { faucet: true, .. } => {
-                let project_dir = &env::current_dir()?;
-
-                if !project_dir.is_dir() {
-                    anyhow::bail!(format!("{project_dir:?} is not a valid directory."));
-                }
-
-                dbg!(
-                    "\nUsing project directory at {}",
-                    project_dir.canonicalize()?.display()
-                );
-
                 let json_content = include_str!(
                     "../../../examples/faucet/example-program-inputs/faucet-create.json"
                 );
@@ -175,48 +148,35 @@ impl InitArgs {
 pub fn create_new_keypair(wallet_path: PathBuf) {
     let mut keypair_path = wallet_path.clone();
     keypair_path.push(KEYPAIR_FILENAME);
-    println!("Generating new keypair at {keypair_path:?}");
-    let mut f = fs::File::options()
-        .create(true)
-        .write(true)
-        .append(true)
-        .open(keypair_path.clone())
-        .unwrap();
-    writeln!(&mut f, "keypair" /*, The generated json keypair */).unwrap();
-}
-
-pub fn handle_init_command() {
-    let mut wallet_path = env::current_dir().unwrap();
-    wallet_path.push(PathBuf::from(WALLET_PATH));
-    if !wallet_path.exists() {
-        println!("Wallet path not found, would you like to initialize a new lasr wallet at this directory? [Y/n]");
-        loop {
-            let mut stdin = String::new();
-            io::stdin().read_line(&mut stdin).unwrap();
-            match stdin.trim().to_lowercase().as_str() {
-                "yes" | "y" => {
-                    println!("Initializing new wallet at {wallet_path:?}");
-                    create_new_keypair(wallet_path);
-                    break; // call the inner function
-                }
-                "no" | "n" => break, /* call the inner function */
-                _ => continue,       /* keep looping until user input is valid */
-            }
-        }
+    if !keypair_path.exists() {
+        println!("Generating new keypair at {keypair_path:?}");
+        let wallet_info = Wallet::<HttpClient>::get_info(None, None, None)
+            .expect("failed to create new LASR Wallet");
+        let contents = serde_json::to_string(&wallet_info).expect("failed to serialize WalletInfo");
+        let mut f = fs::File::options()
+            .create(true)
+            .write(true)
+            .open(keypair_path.clone())
+            .unwrap();
+        writeln!(&mut f, "{contents}").unwrap();
     } else {
-        println!("Found existing lasr wallet");
-        // call the inner function
+        println!("Found existing LASR Wallet!")
     }
 }
 
-#[tokio::test]
-async fn test_init_template() {
+#[test]
+fn test_init_template() {
     let res = crate::lasrctl::cli::InitArgs::lasr_init(&InitArgs {
         blank: true,
         fungible: false,
         non_fungible: false,
         faucet: false,
-    })
-    .await;
+    });
+
     assert!(res.is_ok());
+}
+
+#[test]
+fn test_keypair_json_creation() {
+    create_new_keypair("".into());
 }
