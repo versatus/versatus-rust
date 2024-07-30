@@ -178,5 +178,8 @@ fn test_init_template() {
 
 #[test]
 fn test_keypair_json_creation() {
-    create_new_keypair("".into());
+    let project_dir = &env::current_dir().expect("failed to obtain working directory");
+    let keypair_dir = Path::new(&project_dir).join(".lasr");
+    fs::create_dir_all(&keypair_dir).expect("failed to create keypair dir: .lasr");
+    create_new_keypair(keypair_dir);
 }
