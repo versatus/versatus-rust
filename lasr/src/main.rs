@@ -63,12 +63,10 @@
 //! your program if they knew almost nothing about LASR.
 
 use clap::Parser;
+use lasr_rust::lasrctl::cli::commands::init::InitArgs;
 use lasr_rust::lasrctl::cli::LasrCommand;
 use lasr_rust::{
-    lasrctl::{
-        cli::{InitArgs, LasrCtl},
-        network::client::NetworkClient,
-    },
+    lasrctl::{cli::LasrCtl, network::client::NetworkClient},
     scripts::consts::{LASR_RPC_URL_STABLE, VIPFS_URL},
 };
 
