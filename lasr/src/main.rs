@@ -41,7 +41,7 @@ use anyhow::Ok;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     match LasrCtl::parse().command() {
-        LasrCommand::Init(init_args) => InitArgs::lasr_init(init_args)
+        LasrCommand::Init(init_args) => InitArgs::lasr_init(&init_args)
             .map_err(|e| anyhow::anyhow!("failed to initalize LASR program: {e:?}"))?,
         LasrCommand::Build(_) => todo!(),
         LasrCommand::Test(_) => todo!(),

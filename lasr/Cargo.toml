@@ -7,7 +7,7 @@ edition = "2021"
 anyhow = "1.0"
 clap = { version = "4.5.7", features = [ "derive" ] }
 jsonrpsee = { version = "0.22.5", features = ["http-client"] }
-lasr_types = { git = "https://github.com/versatus/lasr" }
+lasr_types = { version = "0.9.0" }
 lasr_wallet = { git = "https://github.com/versatus/lasr" }
 lasr_rpc = { git = "http://github.com/versatus/lasr" }
 serde = { version = "1.0", features = ["derive"] }

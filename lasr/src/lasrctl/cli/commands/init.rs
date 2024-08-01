@@ -1,10 +1,10 @@
-use crate::scripts::consts::{KEYPAIR_FILENAME, WALLET_PATH};
+use crate::scripts::consts::KEYPAIR_FILENAME;
 use clap::Parser;
 use jsonrpsee::http_client::HttpClient;
 use lasr_wallet::Wallet;
 use std::{
     env, fs,
-    io::{self, Write},
+    io::Write,
     path::{Path, PathBuf},
 };
 
@@ -49,7 +49,10 @@ impl InitArgs {
             let main_rs_path = src_dir.join("main.rs");
             let mut main_rs_file = fs::File::create(main_rs_path)?;
             main_rs_file.write_all(example_program.as_bytes())?;
-            // TODO: Edit .toml file here.... to include all necessary deps.
+
+            std::process::Command::new("cargo")
+                .arg("add")
+                .arg("lasr_types");
 
             println!("Successfully initalized LASR application folder");
         } else {
