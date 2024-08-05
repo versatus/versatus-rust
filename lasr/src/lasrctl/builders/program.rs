@@ -55,7 +55,7 @@ impl Program<Inputs> {
         }
     }
 
-    fn start(&self, compute_inputs: &Inputs) -> Result<String, anyhow::Error> {
+    pub fn start(&self, compute_inputs: &Inputs) -> Result<String, anyhow::Error> {
         self.execute_method(compute_inputs)
     }
 
@@ -86,14 +86,14 @@ pub enum MethodStrategy {
     rename_all = "camelCase"
 )]
 pub struct CreateTransactionInputs {
-    name: Option<String>,
-    symbol: Option<String>,
-    total_supply: Option<String>,
-    initialized_supply: Option<String>,
-    img_url: Option<String>,
-    payment_program_address: Option<String>,
-    price: Option<String>,
-    collection: Option<String>,
+    pub name: Option<String>,
+    pub symbol: Option<String>,
+    pub total_supply: Option<String>,
+    pub initialized_supply: Option<String>,
+    pub img_url: Option<String>,
+    pub payment_program_address: Option<String>,
+    pub price: Option<String>,
+    pub collection: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
