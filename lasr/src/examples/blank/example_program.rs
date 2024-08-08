@@ -4,11 +4,11 @@ use lasr_types::*;
 use std::{collections::BTreeMap, io::Read};
 
 pub struct BlankProgram {
-    program: Program<Inputs>,
+    _program: Program<Inputs>,
 }
 
 impl BlankProgram {
-    pub fn new(inputs: Inputs) -> Program<Inputs> {
+    pub fn new(_inputs: Inputs) -> Program<Inputs> {
         Program::new()
     }
 

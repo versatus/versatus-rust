@@ -54,6 +54,8 @@ impl InitArgs {
                 .arg("add")
                 .arg("lasr_types");
 
+            //TODO: Potentially add `lasr_cli` as cargo dep (would need to be published)
+
             println!("Successfully initalized LASR application folder");
         } else {
             eprintln!("Failed to initalized LASR application folder");

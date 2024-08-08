@@ -31,50 +31,47 @@
 //! parts around for it to make sense. Write it as if someone were to have to read it as instructions of how to use
 //! your program if they knew almost nothing about LASR.
 
-use std::io::Read;
-
 use clap::Parser;
-use lasr_rust::lasrctl::builders::program::Program;
 use lasr_rust::lasrctl::cli::commands::init::InitArgs;
 use lasr_rust::lasrctl::cli::LasrCommand;
 use lasr_rust::lasrctl::cli::LasrCtl;
 
 use anyhow::Ok;
 
-// #[tokio::main]
-// async fn main() -> anyhow::Result<()> {
-//     match LasrCtl::parse().command() {
-//         LasrCommand::Init(init_args) => InitArgs::lasr_init(&init_args)
-//             .map_err(|e| anyhow::anyhow!("failed to initalize LASR program: {e:?}"))?,
-//         LasrCommand::Build(_) => todo!(),
-//         LasrCommand::Test(_) => todo!(),
-//         LasrCommand::Deploy(_) => todo!(),
-//         LasrCommand::Call(_) => todo!(),
-//         LasrCommand::Send(_) => todo!(),
-//     }
-
-//     Ok(())
-// }
-
 #[tokio::main]
-/// A minimalistic main function for a Rust LASR program.
-/// Takes in lasr_type::Inputs, handles the call based on the program method, and produces necessary lasr_types::Outputs to be processed by protocol
 async fn main() -> anyhow::Result<()> {
-    let mut input = String::new();
-    std::io::stdin().read_to_string(&mut input)?;
-
-    let compute_inputs: lasr_types::Inputs = serde_json::from_str(&input)?;
-    let program = Program::new();
-    let result = program
-        .execute_method(&compute_inputs)
-        .map_err(|e| e.to_string())
-        .unwrap();
-
-    let json_output = serde_json::to_string(&result)?;
-    println!("{json_output}");
+    match LasrCtl::parse().command() {
+        LasrCommand::Init(init_args) => InitArgs::lasr_init(&init_args)
+            .map_err(|e| anyhow::anyhow!("failed to initalize LASR program: {e:?}"))?,
+        LasrCommand::Build(_) => todo!(),
+        LasrCommand::Test(_) => todo!(),
+        LasrCommand::Deploy(_) => todo!(),
+        LasrCommand::Call(_) => todo!(),
+        LasrCommand::Send(_) => todo!(),
+    }
 
     Ok(())
 }
+
+// #[tokio::main]
+// /// A minimalistic main function for a Rust LASR program.
+// /// Takes in lasr_type::Inputs, handles the call based on the program method, and produces necessary lasr_types::Outputs to be processed by protocol
+// async fn main() -> anyhow::Result<()> {
+//     let mut input = String::new();
+//     std::io::stdin().read_to_string(&mut input)?;
+
+//     let compute_inputs: lasr_types::Inputs = serde_json::from_str(&input)?;
+//     let program = Program::new();
+//     let result = program
+//         .execute_method(&compute_inputs)
+//         .map_err(|e| e.to_string())
+//         .unwrap();
+
+//     let json_output = serde_json::to_string(&result)?;
+//     println!("{json_output}");
+
+//     Ok(())
+// }
 
 #[macro_export]
 macro_rules! cargo_command {
