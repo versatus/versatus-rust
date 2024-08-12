@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::process::Stdio;
 
 use clap::Args;
 use lasr_types::Inputs;
@@ -15,44 +15,11 @@ pub struct BuildArgs {
 }
 
 impl BuildArgs {
-    fn _parse_path(path_str: &str) -> (String, String, String, String, String) {
-        let path = Path::new(path_str);
-
-        let root = path
-            .components()
-            .next()
-            .unwrap()
-            .as_os_str()
-            .to_string_lossy()
-            .to_string();
-        let dir = path
-            .parent()
-            .unwrap_or_else(|| Path::new(""))
-            .to_string_lossy()
-            .to_string();
-        let base = path
-            .file_name()
-            .unwrap_or_else(|| "".as_ref())
-            .to_string_lossy()
-            .to_string();
-        let ext = path
-            .extension()
-            .unwrap_or_else(|| "".as_ref())
-            .to_string_lossy()
-            .to_string();
-        let name = path
-            .file_stem()
-            .unwrap_or_else(|| "".as_ref())
-            .to_string_lossy()
-            .to_string();
-
-        (root, dir, base, ext, name)
-    }
-
-    pub fn cargo_build() -> anyhow::Result<String> {
+    pub fn lasr_build() -> anyhow::Result<String> {
         let output = std::process::Command::new("cargo")
             .arg("build")
             .arg("--release")
+            .stdout(Stdio::piped())
             .output()?;
 
         if output.status.success() {

@@ -12,20 +12,27 @@
 //! ```
 //! cargo run lasrctl init hello-lasr
 //! ```
-//! Copies the necessary files for building lasr programs
+//! Copies the necessary files for building lasr programs including:
+//!     - `keypair.json` file containing new wallet keys,
+//!     - `example_program_inputs.json` file containing a sample of the JSON inputs used when building LASR programs,
+//!     - `YOUR_PROJECT_NAME` new Rust Project with an example LASR Program as `main.rs`.
 //!
 //! 4) Build Your Program
 //! ```
 //! cargo run lasrctl build example-program.rs
 //! ```
+//! Runs example/user Inputs though main fn, and returns Outputs that can later be deployed as a Program via `lasr_cli`
+//! TODO: Find way aquire inputs in variable for build execution
 //! 5) Test Your Program
 //! ```
 //! cargo run lasrctl test --build example-program --input_json example-program-inputs
 //! ```
+//! Tests the given Outputs via `lasr_cli`, upon success the Program is ready for deployment
 //! 6) Create Account and Deploy Program
 //! ```
 //! cargo run lasrctl deploy --build example-program --symbol MYTOKEN --program_name "My first token on LASR"
 //! ```
+//! Deploy a LASR Program via `lasr_cli
 //!
 //! TODO: Re-write the above to be module level documentation about the program, you may need to move certain
 //! parts around for it to make sense. Write it as if someone were to have to read it as instructions of how to use
@@ -52,26 +59,6 @@ async fn main() -> anyhow::Result<()> {
 
     Ok(())
 }
-
-// #[tokio::main]
-// /// A minimalistic main function for a Rust LASR program.
-// /// Takes in lasr_type::Inputs, handles the call based on the program method, and produces necessary lasr_types::Outputs to be processed by protocol
-// async fn main() -> anyhow::Result<()> {
-//     let mut input = String::new();
-//     std::io::stdin().read_to_string(&mut input)?;
-
-//     let compute_inputs: lasr_types::Inputs = serde_json::from_str(&input)?;
-//     let program = Program::new();
-//     let result = program
-//         .execute_method(&compute_inputs)
-//         .map_err(|e| e.to_string())
-//         .unwrap();
-
-//     let json_output = serde_json::to_string(&result)?;
-//     println!("{json_output}");
-
-//     Ok(())
-// }
 
 #[macro_export]
 macro_rules! cargo_command {
