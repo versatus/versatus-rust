@@ -1,7 +1,7 @@
 use crate::lasrctl::builders::program::{CreateTransactionInputs, Program};
 use anyhow::Ok;
 use lasr_types::*;
-use std::{collections::BTreeMap, io::Read};
+use std::{collections::BTreeMap, fs};
 
 pub struct BlankProgram {
     _program: Program<Inputs>,
@@ -64,19 +64,18 @@ impl BlankProgram {
 #[allow(dead_code)]
 /// A minimalistic main function for a Rust LASR program.
 /// Takes in lasr_type::Inputs, handles the call based on the program method, and produces necessary lasr_types::Outputs to be processed by protocol
-fn main() -> anyhow::Result<()> {
-    let mut input = String::new();
-    std::io::stdin().read_to_string(&mut input)?;
+async fn main() -> anyhow::Result<()> {
+    let input = fs::read_to_string("./example-program-inputs.json")?;
 
     let compute_inputs: Inputs = serde_json::from_str(&input)?;
-    let program = BlankProgram::new(compute_inputs.clone());
+    let program = Program::new();
     let result = program
         .start(&compute_inputs)
         .map_err(|e| e.to_string())
         .unwrap();
 
     let json_output = serde_json::to_string(&result)?;
-    println!("{json_output}");
+    println!("{}", &json_output);
 
     Ok(())
 }

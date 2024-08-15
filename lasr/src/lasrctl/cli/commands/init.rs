@@ -52,9 +52,12 @@ impl InitArgs {
 
             std::process::Command::new("cargo")
                 .arg("add")
-                .arg("lasr_types");
+                .arg("anyhow@1.0")
+                .arg("lasr_types")
+                .arg("serde_json@1.0")
+                .output()?;
 
-            //TODO: Potentially add `lasr_cli` as cargo dep (would need to be published)
+            //TODO: Eventually add `lasr_rust` as cargo dep for cli access
 
             println!("Successfully initalized LASR application folder");
         } else {

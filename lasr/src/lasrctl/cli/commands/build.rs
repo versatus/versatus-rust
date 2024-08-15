@@ -1,4 +1,4 @@
-use std::process::Stdio;
+use std::{path::PathBuf, process::Stdio};
 
 use clap::Args;
 use lasr_types::Inputs;
@@ -8,14 +8,14 @@ use crate::lasrctl::builders::program::Program;
 #[derive(Args, Debug)]
 pub struct BuildArgs {
     /// Contract file to include in the build
-    file: String,
+    file: Option<PathBuf>,
     /// Build target. Options: "cargo" or "wasm"
     #[arg(default_value = "cargo")]
     target: String,
 }
 
 impl BuildArgs {
-    pub fn lasr_build() -> anyhow::Result<String> {
+    pub fn lasr_build(&self) -> anyhow::Result<()> {
         let output = std::process::Command::new("cargo")
             .arg("build")
             .arg("--release")
@@ -24,11 +24,11 @@ impl BuildArgs {
 
         if output.status.success() {
             let stdout = output.stdout;
-            let result = serde_json::to_string(&stdout).map_err(|e| {
+            serde_json::to_string(&stdout).map_err(|e| {
                 anyhow::anyhow!("failed to serialize outputs from LASR program: {e:?}")
             })?;
             println!("Successfully built LASR Program, outputs ready for testing!");
-            Ok(result)
+            Ok(())
         } else {
             eprintln!("Failed to build LASR Program, check Inputs and try again...");
             Err(anyhow::anyhow!(
@@ -37,6 +37,7 @@ impl BuildArgs {
             ))
         }
     }
+
     // Program outputs get processed/created via the inputs being fed through the Program's method execution.
     pub fn build_outputs(inputs: Inputs) -> anyhow::Result<String> {
         let program = Program::new();
