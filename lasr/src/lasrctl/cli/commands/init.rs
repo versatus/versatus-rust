@@ -1,4 +1,4 @@
-use crate::scripts::consts::KEYPAIR_FILENAME;
+use crate::{cargo, scripts::consts::KEYPAIR_FILENAME};
 use clap::Parser;
 use jsonrpsee::http_client::HttpClient;
 use lasr_wallet::Wallet;
@@ -40,22 +40,13 @@ impl InitArgs {
         json_file.write_all(json_content.as_bytes())?;
 
         // Run `cargo init` to initialize the project as a cargo project
-        let output = std::process::Command::new("cargo")
-            .arg("init")
-            .arg("--bin")
-            .arg(project_dir)
-            .output()?;
+        let output = cargo!(&"init", &"--bin", project_dir)?;
         if output.status.success() {
             let main_rs_path = src_dir.join("main.rs");
             let mut main_rs_file = fs::File::create(main_rs_path)?;
             main_rs_file.write_all(example_program.as_bytes())?;
 
-            std::process::Command::new("cargo")
-                .arg("add")
-                .arg("anyhow@1.0")
-                .arg("lasr_types")
-                .arg("serde_json@1.0")
-                .output()?;
+            cargo!(&"add", &"anyhow@1.0", &"lasr_types", &"serde_json@1.0")?;
 
             //TODO: Eventually add `lasr_rust` as cargo dep for cli access
 
