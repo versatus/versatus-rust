@@ -10,3 +10,4 @@ pub const VERSE_PROGRAM_ADDRESS: &str = "0x3daeca7e0c8cf7648b91360453ba5634fa243
 pub const FAUCET_URL: &str = "https://playground.versatus.io/";
 pub const WALLET_PATH: &str = ".lasr/wallet";
 pub const KEYPAIR_FILENAME: &str = "keypair.json";
+pub const PROGRAM_OUTPUT_FILENAME: &str = "temp.json";
