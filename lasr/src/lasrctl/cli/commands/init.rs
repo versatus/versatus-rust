@@ -59,7 +59,7 @@ impl InitArgs {
         Ok(())
     }
 
-    pub fn lasr_init(init_args: &InitArgs) -> anyhow::Result<()> {
+    pub fn lasr_init(&self) -> anyhow::Result<()> {
         let project_dir = &env::current_dir()?;
         if !project_dir.is_dir() {
             anyhow::bail!(format!("{project_dir:?} is not a valid directory."));
@@ -75,7 +75,7 @@ impl InitArgs {
 
         create_new_keypair(keypair_dir);
 
-        match init_args {
+        match self {
             InitArgs { blank: true, .. } => {
                 let json_content = include_str!(
                     "../../../examples/blank/example-program-inputs/blank-create.json"

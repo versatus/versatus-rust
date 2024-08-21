@@ -1,7 +1,7 @@
 use crate::lasrctl::builders::program::{CreateTransactionInputs, Program};
 use anyhow::Ok;
 use lasr_types::*;
-use std::{collections::BTreeMap, fs};
+use std::collections::BTreeMap;
 
 pub struct BlankProgram {
     _program: Program<Inputs>,
@@ -63,22 +63,11 @@ impl BlankProgram {
 
 #[allow(dead_code)]
 /// A minimalistic main function for a Rust LASR program.
-/// Takes in lasr_type::Inputs, handles the call based on the program method, and produces necessary lasr_types::Outputs to be processed by protocol
+/// A Program that takes in lasr_type::Inputs, handles the call based on the program method, and produces necessary lasr_types::Outputs to be processed by protocol
 async fn main() -> anyhow::Result<()> {
     // This needs to read from stdin the json inputs instead of reading from a file.
     // To read from a file and test inputs, the main program `lasrctl` should accept a program and inputs
     // and read the inputs from that file, similarly to https://github.com/versatus/versatus-javascript/blob/main/GETTING_STARTED.md#test-your-program
-    let input = fs::read_to_string("./example-program-inputs.json")?;
-
-    let compute_inputs: Inputs = serde_json::from_str(&input)?;
-    let program = Program::new();
-    let result = program
-        .start(&compute_inputs)
-        .map_err(|e| e.to_string())
-        .unwrap();
-
-    let json_output = serde_json::to_string(&result)?;
-    println!("{}", &json_output);
-
+    Program::run();
     Ok(())
 }

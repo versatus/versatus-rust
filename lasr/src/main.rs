@@ -41,6 +41,7 @@
 use clap::Parser;
 use lasr_rust::lasrctl::cli::commands::build::BuildArgs;
 use lasr_rust::lasrctl::cli::commands::init::InitArgs;
+use lasr_rust::lasrctl::cli::commands::test::TestArgs;
 use lasr_rust::lasrctl::cli::LasrCommand;
 use lasr_rust::lasrctl::cli::LasrCtl;
 
@@ -53,7 +54,8 @@ async fn main() -> anyhow::Result<()> {
             .map_err(|e| anyhow::anyhow!("failed to initalize LASR program: {e:?}"))?,
         LasrCommand::Build(build_args) => BuildArgs::lasr_build(&build_args)
             .map_err(|e| anyhow::anyhow!("failed to build LASR program outputs: {e:?}"))?,
-        LasrCommand::Test(_) => todo!(),
+        LasrCommand::Test(test_args) => TestArgs::test_program(&test_args)
+            .map_err(|e| anyhow::anyhow!("failed to test LASR program: {e:?}"))?,
         LasrCommand::Deploy(_) => todo!(),
         LasrCommand::Call(_) => todo!(),
         LasrCommand::Send(_) => todo!(),
