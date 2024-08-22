@@ -42,6 +42,7 @@ impl TestArgs {
         println!("Inputs discovered: {json_input_str:?}");
         let mut handle = std::process::Command::new(&build_path)
             .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
             .spawn()
             .map_err(|e| {
                 anyhow::anyhow!("failed to spawn child process for {build_path:?}: {e:?}")
