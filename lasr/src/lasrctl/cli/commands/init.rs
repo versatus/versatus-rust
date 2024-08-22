@@ -151,7 +151,8 @@ pub fn create_new_keypair(wallet_path: PathBuf) {
         println!("Generating new keypair at {keypair_path:?}");
         let wallet_info = Wallet::<HttpClient>::get_info(None, None, None)
             .expect("failed to create new LASR Wallet");
-        let contents = serde_json::to_string(&wallet_info).expect("failed to serialize WalletInfo");
+        let contents =
+            serde_json::to_string_pretty(&wallet_info).expect("failed to serialize WalletInfo");
         let mut f = fs::File::options()
             .create(true)
             .write(true)

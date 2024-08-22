@@ -38,14 +38,13 @@
 //! parts around for it to make sense. Write it as if someone were to have to read it as instructions of how to use
 //! your program if they knew almost nothing about LASR.
 
+use std::process::Stdio;
+
 use clap::Parser;
 use lasr_rust::lasrctl::cli::commands::build::BuildArgs;
 use lasr_rust::lasrctl::cli::commands::init::InitArgs;
-use lasr_rust::lasrctl::cli::commands::test::TestArgs;
 use lasr_rust::lasrctl::cli::LasrCommand;
 use lasr_rust::lasrctl::cli::LasrCtl;
-
-use anyhow::Ok;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -54,8 +53,35 @@ async fn main() -> anyhow::Result<()> {
             .map_err(|e| anyhow::anyhow!("failed to initalize LASR program: {e:?}"))?,
         LasrCommand::Build(build_args) => BuildArgs::lasr_build(&build_args)
             .map_err(|e| anyhow::anyhow!("failed to build LASR program outputs: {e:?}"))?,
-        LasrCommand::Test(test_args) => TestArgs::test_program(&test_args)
-            .map_err(|e| anyhow::anyhow!("failed to test LASR program: {e:?}"))?,
+        LasrCommand::Test(test_args) => {
+            let result = test_args.test_program();
+            if let Ok(output) = &result {
+                match output.status.code() {
+                    Some(0) => {
+                        let outputs_json = String::from_utf8_lossy(&output.stdout);
+                        println!("successfully retreived program outputs: {}", &outputs_json);
+                        let handle = std::process::Command::new("lasr_cli")
+                            .args(&["parse-outputs", "-j", &outputs_json])
+                            .spawn()
+                            .map_err(|e| {
+                                anyhow::anyhow!("failed to spawn child process for lasr_cli: {e:?}")
+                            })?;
+                        let program_outputs = handle.wait_with_output().map_err(|e| {
+                            anyhow::anyhow!("failed to verify json outputs via lasr_cli: {e:?}")
+                        })?;
+                        println!("{}", String::from_utf8_lossy(&program_outputs.stdout));
+                        eprintln!("{}", String::from_utf8_lossy(&program_outputs.stderr));
+                    }
+                    Some(code) => {
+                        anyhow::bail!("encountered an error while attempting to retreive program outputs: {} {}", String::from_utf8_lossy(&output.stderr), code);
+                    }
+                    None => anyhow::bail!(
+                        "encountered an error while attempting to retreive program outputs"
+                    ),
+                }
+            }
+        }
+
         LasrCommand::Deploy(_) => todo!(),
         LasrCommand::Call(_) => todo!(),
         LasrCommand::Send(_) => todo!(),

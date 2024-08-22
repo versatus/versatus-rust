@@ -1,4 +1,4 @@
-use std::{collections::HashMap, str::FromStr};
+use std::{collections::HashMap, io::Read, str::FromStr};
 
 use anyhow::Ok;
 use lasr_types::*;
@@ -59,17 +59,22 @@ impl Program<Inputs> {
         self.execute_method(compute_inputs)
     }
 
-    pub fn run() {
-        use std::io::{self, Read};
-
+    pub fn run() -> anyhow::Result<()> {
         let mut input = String::new();
-        io::stdin().read_to_string(&mut input).unwrap();
+        std::io::stdin()
+            .read_to_string(&mut input)
+            .map_err(|e| anyhow::anyhow!("error while reading stdin to string: {e:?}"))?;
 
-        let parsed_data: Inputs = serde_json::from_str(&input).unwrap();
+        let parsed_data: Inputs = serde_json::from_str(&input).map_err(|e| {
+            anyhow::anyhow!("error serializing stdin inputs to lasr_type Inputs: {e:?}")
+        })?;
         let program = Program::new();
-        let result = program.start(&parsed_data).unwrap();
+        let result = program
+            .start(&parsed_data)
+            .map_err(|e| anyhow::anyhow!("error while starting LASR program: {e:?}"))?;
 
         println!("{}", result);
+        Ok(())
     }
 }
 

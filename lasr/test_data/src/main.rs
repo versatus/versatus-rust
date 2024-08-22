@@ -1,5 +1,5 @@
-use crate::lasrctl::builders::program::{CreateTransactionInputs, Program};
 use anyhow::Ok;
+use lasr_rust::lasrctl::builders::program::{CreateTransactionInputs, Program};
 use lasr_types::*;
 use std::collections::BTreeMap;
 
@@ -68,6 +68,8 @@ fn main() -> anyhow::Result<()> {
     // This needs to read from stdin the json inputs instead of reading from a file.
     // To read from a file and test inputs, the main program `lasrctl` should accept a program and inputs
     // and read the inputs from that file, similarly to https://github.com/versatus/versatus-javascript/blob/main/GETTING_STARTED.md#test-your-program
-    Program::run();
+    if let Err(e) = Program::run() {
+        anyhow::bail!("program failed: {e:?}")
+    }
     Ok(())
 }
