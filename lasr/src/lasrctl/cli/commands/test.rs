@@ -2,6 +2,7 @@ use anyhow::bail;
 use clap::Args;
 use std::{
     io::Write,
+    path::PathBuf,
     process::{Output, Stdio},
 };
 
@@ -9,15 +10,15 @@ use std::{
 pub struct TestArgs {
     /// Filename of the built program to be deployed. Ex: "example-program"
     #[arg(short = 'b')]
-    build: String,
+    build: PathBuf,
     /// Path to the JSON input file or dir containing JSON files for testing
     #[arg(short = 'i')]
-    input_json: String,
+    input_json: PathBuf,
 }
 
 impl TestArgs {
     #[cfg(test)]
-    pub fn new(build: String, input_json: String) -> Self {
+    pub fn new(build: PathBuf, input_json: PathBuf) -> Self {
         Self { build, input_json }
     }
     /// Takes a build path to a lasr program binary, and a path to some json inputs
@@ -25,27 +26,34 @@ impl TestArgs {
     /// the std::io::Output on success. This output can then be used more granularly
     /// for testing, debugging and printing useful information to a user.
     pub fn test_program(&self) -> anyhow::Result<Output> {
-        let build_path = std::path::PathBuf::from(&self.build);
-        if !build_path.exists() {
-            bail!("{build_path:?} does not exist, please provide a valid path and try again.");
+        if !self.build.exists() {
+            bail!(
+                "{:?} does not exist, please provide a valid path and try again.",
+                self.build
+            );
         }
-        let input_path = std::path::PathBuf::from(&self.input_json);
-        if !input_path.exists() {
-            bail!("{input_path:?} does not exist, please provide a valid path and try again.");
+        if !self.input_json.exists() {
+            bail!(
+                "{:?} does not exist, please provide a valid path and try again.",
+                self.input_json
+            );
         }
 
-        println!("Searching for program path: {build_path:?}");
-        let json_input_str = &std::fs::read_to_string(&input_path).map_err(|e| {
-            anyhow::anyhow!("failed to read json inputs to string from path {input_path:?}: {e:?}")
+        println!("Searching for program path: {:?}", self.build);
+        let json_input_str = &std::fs::read_to_string(&self.input_json).map_err(|e| {
+            anyhow::anyhow!(
+                "failed to read json inputs to string from path {:?}: {e:?}",
+                self.input_json
+            )
         })?;
 
         println!("Inputs discovered: {json_input_str:?}");
-        let mut handle = std::process::Command::new(&build_path)
+        let mut handle = std::process::Command::new(&self.build)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()
             .map_err(|e| {
-                anyhow::anyhow!("failed to spawn child process for {build_path:?}: {e:?}")
+                anyhow::anyhow!("failed to spawn child process for {:?}: {e:?}", self.build)
             })?;
         if let Some(mut stdin) = handle.stdin.take() {
             // Write the json_input to the child's stdin
@@ -53,13 +61,13 @@ impl TestArgs {
                 .write_all(json_input_str.as_bytes())
                 .map_err(|e| anyhow::anyhow!("failed to write json inputs to stdin: {e:?}"))?;
         } else {
-            bail!("failed to acquire stdin for child process {build_path:?}")
+            bail!("failed to acquire stdin for child process {:?}", self.build)
         }
 
         println!("Cargo project running...");
         handle
             .wait_with_output()
-            .map_err(|e| anyhow::anyhow!("failed to run program at path: {build_path:?}: {e:?}"))
+            .map_err(|e| anyhow::anyhow!("failed to run program at path: {:?}: {e:?}", self.build))
     }
 }
 
@@ -74,16 +82,7 @@ mod test_args_tests {
         build_path.push("test_data/target/debug/test_data");
         let mut inputs_json = cargo_manifest_path;
         inputs_json.push("test_data/example-program-inputs.json");
-        let args = TestArgs::new(
-            build_path
-                .to_str()
-                .expect("failed to convert pathbuf to str")
-                .into(),
-            inputs_json
-                .to_str()
-                .expect("failed to convert pathbuf to str")
-                .into(),
-        );
+        let args = TestArgs::new(build_path, inputs_json);
         let result = args.test_program();
         assert!(result.is_ok());
         let output = result.unwrap();
