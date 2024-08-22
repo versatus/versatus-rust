@@ -48,7 +48,6 @@ impl TestArgs {
                 anyhow::anyhow!("failed to spawn child process for {build_path:?}: {e:?}")
             })?;
         if let Some(mut stdin) = handle.stdin.take() {
-            dbg!("WE MADE IT FAM");
             // Write the json_input to the child's stdin
             stdin
                 .write_all(json_input_str.as_bytes())
