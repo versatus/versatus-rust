@@ -1,8 +1,11 @@
+use std::path::PathBuf;
+
 use clap::Args;
+use lasr_types::Inputs;
 
 #[derive(Args, Debug)]
 pub struct DeployArgs {
-    /// Filename of the built program to be deployed. Ex: "example-program"
+    /// Filename of the built program to be deployed. Ex: "path/to/example-program"
     #[arg(short = 'b')]
     build: String,
     /// Author of the program
@@ -38,4 +41,17 @@ pub struct DeployArgs {
     /// Network handle. Options: "stable" or "unstable"
     #[arg(short = 'x', default_value = "stable")]
     network: String,
+}
+
+impl DeployArgs {
+    fn handle_deploy(args: DeployArgs) -> anyhow::Result<()> {
+        Ok(())
+    }
+
+    fn get_txn_inputs(inputs: Inputs) -> anyhow::Result<String> {
+        let txn = inputs.transaction;
+        let txn_inputs = txn.inputs();
+
+        Ok(txn_inputs)
+    }
 }

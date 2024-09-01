@@ -8,7 +8,7 @@ use std::{
 
 #[derive(Args, Debug)]
 pub struct TestArgs {
-    /// Filename of the built program to be deployed. Ex: "example-program"
+    /// Filename of the built program to be deployed. Ex: "path/to/example-program"
     #[arg(short = 'b')]
     build: PathBuf,
     /// Path to the JSON input file or dir containing JSON files for testing
@@ -74,7 +74,6 @@ impl TestArgs {
 #[cfg(test)]
 mod test_args_tests {
     use super::TestArgs;
-    // test functions don't return anything...
     #[test]
     fn test_program_works() {
         let cargo_manifest_path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));

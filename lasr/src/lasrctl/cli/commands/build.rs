@@ -10,12 +10,14 @@ use lasr_types::Inputs;
 
 use crate::{lasrctl::builders::program::Program, scripts::consts::PROGRAM_OUTPUT_FILENAME};
 
+// This section of the lasr_rust can potentially be removed, and users can build their program's executable by just running `cargo build --release`.
+// The resulting binary is what is used for testing & deployment.
 #[derive(Args, Debug)]
 pub struct BuildArgs {
     /// Contract file to include in the build
     file: Option<PathBuf>,
-    /// Build target. Options: "cargo" or "wasm"
-    #[arg(default_value = "cargo")]
+    /// Build target. Options: "bin" or "wasm"
+    #[arg(default_value = "bin")]
     target: String,
 }
 
