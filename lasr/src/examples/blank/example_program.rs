@@ -65,9 +65,6 @@ impl BlankProgram {
 /// A minimalistic main function for a Rust LASR program.
 /// A Program that takes in lasr_type::Inputs, handles the call based on the program method, and produces necessary lasr_types::Outputs to be processed by protocol
 fn main() -> anyhow::Result<()> {
-    // This needs to read from stdin the json inputs instead of reading from a file.
-    // To read from a file and test inputs, the main program `lasrctl` should accept a program and inputs
-    // and read the inputs from that file, similarly to https://github.com/versatus/versatus-javascript/blob/main/GETTING_STARTED.md#test-your-program
     if let Err(e) = Program::run() {
         bail!("Error occured while running program: {}", e.to_string())
     }
