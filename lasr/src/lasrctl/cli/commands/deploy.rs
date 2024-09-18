@@ -1,7 +1,4 @@
-use std::path::PathBuf;
-
 use clap::Args;
-use lasr_types::Inputs;
 
 #[derive(Args, Debug)]
 pub struct DeployArgs {
@@ -43,15 +40,3 @@ pub struct DeployArgs {
     network: String,
 }
 
-impl DeployArgs {
-    fn handle_deploy(args: DeployArgs) -> anyhow::Result<()> {
-        Ok(())
-    }
-
-    fn get_txn_inputs(inputs: Inputs) -> anyhow::Result<String> {
-        let txn = inputs.transaction;
-        let txn_inputs = txn.inputs();
-
-        Ok(txn_inputs)
-    }
-}
