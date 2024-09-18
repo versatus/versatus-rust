@@ -1,0 +1,22 @@
+[package]
+name = "lasr-rust"
+version = "0.1.0"
+edition = "2021"
+
+[profile.release]
+opt-level = 'z'     # Optimize for size
+lto = true          # Enable link-time optimization
+codegen-units = 1   # Reduce number of codegen units to increase optimizations
+panic = 'abort'     # Abort on panic
+strip = true        # Strip symbols from binary*
+
+[dependencies]
+anyhow = "1.0"
+clap = { version = "4.5.7", features = [ "derive" ] }
+jsonrpsee = { version = "0.22.5", features = ["http-client"] }
+lasr_types = { version = "0.9.0" }
+lasr_wallet = { git = "https://github.com/versatus/lasr" }
+lasr_rpc = { git = "http://github.com/versatus/lasr" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.34.0", features = ["full"] }
